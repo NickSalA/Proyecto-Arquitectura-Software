@@ -12,9 +12,6 @@ import java.nio.file.StandardCopyOption
  * Usa la ruta UNC configurada para el primer entregable.
  */
 
-private const val LOCAL_DATA_PATH = "data/articulos.dat"
-private const val SHARED_DATA_PATH = "\\\\MATHIPC\\Users\\User\\Desktop\\DATOS\\articulos.dat"
-
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
     println("║       MINIMARKET POS - Componente SEND           ║")
@@ -22,7 +19,7 @@ fun main() {
     println("╚══════════════════════════════════════════════════╝")
     println()
 
-    val archivoLocal = File(LOCAL_DATA_PATH)
+    val archivoLocal = File(AppConfig.LOCAL_DATA_PATH)
     if (!archivoLocal.exists()) {
         println("   ✗ ERROR: No se encontró el archivo de datos local.")
         println("   Ruta esperada: ${archivoLocal.absolutePath}")
@@ -38,7 +35,7 @@ fun main() {
     println("   • Registros: $recordCount")
     println()
 
-    val destPath = Paths.get(SHARED_DATA_PATH)
+    val destPath = Paths.get(AppConfig.sharedDataPath)
 
     println("   Destino: $destPath")
     println()

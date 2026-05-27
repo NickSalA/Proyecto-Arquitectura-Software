@@ -61,6 +61,7 @@ fi
 echo -e "${YELLOW}[2/3] Compilando componente Send...${NC}"
 kotlinc \
     "$SRC_DIR/minimarket/data/model/Articulo.kt" \
+    "$SRC_DIR/minimarket/application/AppConfig.kt" \
     "$SRC_DIR/minimarket/application/Send.kt" \
     -include-runtime \
     -d "$OUT_DIR/Send.jar" \
@@ -92,6 +93,7 @@ fi
 
 kotlinc \
     "$SRC_DIR/minimarket/data/model/Articulo.kt" \
+    "$SRC_DIR/minimarket/application/AppConfig.kt" \
     "$SRC_DIR/minimarket/application/Update.kt" \
     $CLASSPATH_OPT \
     -include-runtime \

@@ -40,6 +40,7 @@ La carpeta compartida configurada para la transferencia es:
 │   └── create_database.sql       # Script DDL para SQL Server
 ├── src/main/kotlin/minimarket/
 │   ├── application/
+│   │   ├── AppConfig.kt          # Configuracion compartida de rutas y JDBC
 │   │   ├── Main.kt               # App CRUD interactiva
 │   │   ├── Send.kt               # Transferencia de archivos
 │   │   └── Update.kt             # Sincronizacion SQL Server
@@ -74,6 +75,26 @@ La ruta local de datos de la aplicacion es:
 
 ```text
 data/articulos.dat
+```
+
+La ruta compartida por defecto, validada en Windows, es:
+
+```text
+\\MATHIPC\Users\User\Desktop\DATOS\articulos.dat
+```
+
+Si se necesita ejecutar en otra maquina o sistema operativo, se puede cambiar la ruta compartida con la variable de entorno `SHARED_DATA_PATH` sin modificar el codigo.
+
+En Windows PowerShell:
+
+```powershell
+$env:SHARED_DATA_PATH="\\MATHIPC\Users\User\Desktop\DATOS\articulos.dat"
+```
+
+En Linux Mint:
+
+```bash
+export SHARED_DATA_PATH="/mnt/datos/articulos.dat"
 ```
 
 ## Ejecución
@@ -114,7 +135,7 @@ Permite registrar, consultar, modificar, eliminar y listar articulos en el archi
 
 ### 5. Transferir datos con Send
 
-`Send` copia `data/articulos.dat` hacia la carpeta compartida `\\MATHIPC\Users\User\Desktop\DATOS`.
+`Send` copia `data/articulos.dat` hacia la carpeta compartida configurada. En Windows, por defecto usa `\\MATHIPC\Users\User\Desktop\DATOS`.
 
 ```powershell
 .\gradlew.bat runSend
@@ -136,6 +157,65 @@ Permite registrar, consultar, modificar, eliminar y listar articulos en el archi
 4. Ejecutar `runSend` para transferir el archivo local a la carpeta compartida.
 5. Ejecutar `runUpdate` para consolidar los datos en SQL Server.
 6. Consultar la tabla `Articulos` para verificar que los registros fueron insertados o actualizados.
+
+## Ejecucion En Linux Mint
+
+En Linux Mint se puede ejecutar el mismo proyecto, pero la carpeta compartida de Windows debe montarse como una ruta local usando SMB/CIFS. La ruta UNC de Windows `\\MATHIPC\Users\User\Desktop\DATOS` se representa como `//MATHIPC/Users/User/Desktop/DATOS` al montarla.
+
+### 1. Instalar dependencias
+
+```bash
+sudo apt update
+sudo apt install -y openjdk-17-jdk docker.io docker-compose-plugin cifs-utils
+```
+
+### 2. Montar la carpeta compartida
+
+```bash
+sudo mkdir -p /mnt/datos
+sudo mount -t cifs //MATHIPC/Users/User/Desktop/DATOS /mnt/datos -o username=TU_USUARIO,password=TU_PASSWORD,vers=3.0
+```
+
+Si la carpeta compartida no tiene credenciales, probar:
+
+```bash
+sudo mount -t cifs //MATHIPC/Users/User/Desktop/DATOS /mnt/datos -o guest,vers=3.0
+```
+
+Verificar que el montaje funciona:
+
+```bash
+ls -la /mnt/datos
+```
+
+### 3. Configurar la ruta para Send y Update
+
+```bash
+export SHARED_DATA_PATH="/mnt/datos/articulos.dat"
+```
+
+### 4. Levantar SQL Server y crear la base
+
+
+```bash
+docker compose up -d
+docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_database.sql
+```
+
+### 5. Ejecutar el flujo
+
+```bash
+./gradlew build
+./gradlew runMain
+./gradlew runSend
+./gradlew runUpdate
+```
+
+### 6. Consultar SQL Server
+
+```bash
+docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -d MinimarketDB -Q "SELECT * FROM Articulos"
+```
 
 ## Diseño de Registro (56 bytes)
 

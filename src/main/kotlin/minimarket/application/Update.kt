@@ -16,9 +16,6 @@ import java.sql.DriverManager
  * Conexión JDBC hacia el SQL Server levantado por Docker.
  */
 
-private const val SHARED_DATA_PATH = "\\\\MATHIPC\\Users\\User\\Desktop\\DATOS\\articulos.dat"
-private const val JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName=MinimarketDB;user=sa;password=DreamTeam_26;trustServerCertificate=true"
-
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
     println("║      MINIMARKET POS - Componente UPDATE          ║")
@@ -26,7 +23,7 @@ fun main() {
     println("╚══════════════════════════════════════════════════╝")
     println()
 
-    val sourcePath = Paths.get(SHARED_DATA_PATH)
+    val sourcePath = Paths.get(AppConfig.sharedDataPath)
 
     val sourceFile = sourcePath.toFile()
     if (!sourceFile.exists()) {
@@ -52,7 +49,7 @@ fun main() {
     println("   Conectando a SQL Server...")
     var connection: Connection? = null
     try {
-        connection = DriverManager.getConnection(JDBC_URL)
+        connection = DriverManager.getConnection(AppConfig.JDBC_URL)
         println("   ✓ Conexión establecida.")
         println()
 
