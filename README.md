@@ -143,7 +143,7 @@ Permite registrar, consultar, modificar, eliminar y listar articulos en el archi
 
 ### 6. Consolidar datos con Update
 
-`Update` lee el archivo desde la carpeta compartida y actualiza la tabla `Articulos` en `MinimarketDB`.
+`Update` lee el archivo desde la carpeta compartida y sincroniza la tabla `Articulos` en `MinimarketDB`. Inserta nuevos articulos, actualiza los existentes y elimina de SQL Server los registros que ya no esten activos en el archivo local.
 
 ```powershell
 .\gradlew.bat runUpdate
@@ -155,7 +155,7 @@ Permite registrar, consultar, modificar, eliminar y listar articulos en el archi
 2. Crear la base `MinimarketDB` y la tabla `Articulos`.
 3. Ejecutar `runMain` y registrar articulos.
 4. Ejecutar `runSend` para transferir el archivo local a la carpeta compartida.
-5. Ejecutar `runUpdate` para consolidar los datos en SQL Server.
+5. Ejecutar `runUpdate` para consolidar los datos en SQL Server, incluyendo eliminaciones logicas realizadas localmente.
 6. Consultar la tabla `Articulos` para verificar que los registros fueron insertados o actualizados.
 
 ## Ejecucion En Linux Mint

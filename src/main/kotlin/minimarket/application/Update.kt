@@ -41,11 +41,6 @@ fun main() {
     println("   Registros válidos leídos: ${articulos.size}")
     println()
 
-    if (articulos.isEmpty()) {
-        println("   No hay registros para sincronizar.")
-        return
-    }
-
     println("   Conectando a SQL Server...")
     var connection: Connection? = null
     try {
@@ -61,11 +56,14 @@ fun main() {
             if (existed) actualizados++ else insertados++
         }
 
+        val eliminados = eliminarArticulosObsoletos(connection, articulos.map { it.id })
+
         println()
         println("   ═══ RESUMEN DE SINCRONIZACIÓN ═══")
         println("   • Insertados:   $insertados")
         println("   • Actualizados: $actualizados")
-        println("   • Total:        ${insertados + actualizados}")
+        println("   • Eliminados:   $eliminados")
+        println("   • Total cambios:${insertados + actualizados + eliminados}")
         println("   ✓ Consolidación completada exitosamente.")
     } catch (e: Exception) {
         println("   ✗ ERROR de conexión a SQL Server: ${e.message}")
@@ -128,4 +126,24 @@ private fun sincronizarArticulo(conn: Connection, articulo: Articulo): Boolean {
     }
     println(" [${articulo.descripcion.trim()}]")
     return exists
+}
+
+private fun eliminarArticulosObsoletos(conn: Connection, idsActivos: List<Int>): Int {
+    if (idsActivos.isEmpty()) {
+        val stmt = conn.prepareStatement("DELETE FROM Articulos")
+        try {
+            return stmt.executeUpdate()
+        } finally {
+            stmt.close()
+        }
+    }
+
+    val placeholders = idsActivos.joinToString(",") { "?" }
+    val stmt = conn.prepareStatement("DELETE FROM Articulos WHERE ID NOT IN ($placeholders)")
+    try {
+        idsActivos.forEachIndexed { index, id -> stmt.setInt(index + 1, id) }
+        return stmt.executeUpdate()
+    } finally {
+        stmt.close()
+    }
 }
