@@ -41,7 +41,7 @@ La carpeta compartida configurada para la transferencia es:
 ├── src/main/kotlin/minimarket/
 │   ├── application/
 │   │   ├── AppConfig.kt          # Configuracion compartida de rutas y JDBC
-│   │   ├── Main.kt               # App CRUD interactiva
+│   │   ├── Main.kt               # Interfaz grafica CRUD
 │   │   ├── Send.kt               # Transferencia de archivos
 │   │   └── Update.kt             # Sincronizacion SQL Server
 │   └── data/
@@ -127,7 +127,7 @@ docker exec -it minimarket_sqlserver /opt/mssql-tools/bin/sqlcmd -S localhost -U
 
 ### 4. Ejecutar la aplicacion principal
 
-Permite registrar, consultar, modificar, eliminar y listar articulos en el archivo local `data/articulos.dat`.
+Abre una interfaz grafica para registrar, consultar, modificar, eliminar y listar articulos en el archivo local `data/articulos.dat`.
 
 ```powershell
 .\gradlew.bat runMain
@@ -153,7 +153,7 @@ Permite registrar, consultar, modificar, eliminar y listar articulos en el archi
 
 1. Levantar SQL Server con Docker.
 2. Crear la base `MinimarketDB` y la tabla `Articulos`.
-3. Ejecutar `runMain` y registrar articulos.
+3. Ejecutar `runMain`, abrir la interfaz grafica y registrar articulos.
 4. Ejecutar `runSend` para transferir el archivo local a la carpeta compartida.
 5. Ejecutar `runUpdate` para consolidar los datos en SQL Server, incluyendo eliminaciones logicas realizadas localmente.
 6. Consultar la tabla `Articulos` para verificar que los registros fueron insertados o actualizados.
