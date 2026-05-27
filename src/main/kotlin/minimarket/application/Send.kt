@@ -1,7 +1,6 @@
 package minimarket.application
 
 import java.io.File
-import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -10,16 +9,16 @@ import java.nio.file.StandardCopyOption
  * Componente de Transferencia (Send.EXE)
  *
  * Copia articulos.dat a una carpeta compartida de red.
- * Usa InetAddress.getLocalHost().hostName para resolver la ruta dinámica.
+ * Usa la ruta UNC configurada para el primer entregable.
  */
 
 private const val LOCAL_DATA_PATH = "data/articulos.dat"
-private const val SHARED_FOLDER_NAME = "DATOS"
+private const val SHARED_DATA_PATH = "\\\\MATHIPC\\Users\\User\\Desktop\\DATOS\\articulos.dat"
 
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
-    println("║       MINIMARKET POS - Componente SEND          ║")
-    println("║          Transferencia de Datos v1.0            ║")
+    println("║       MINIMARKET POS - Componente SEND           ║")
+    println("║          Transferencia de Datos v1.0             ║")
     println("╚══════════════════════════════════════════════════╝")
     println()
 
@@ -39,17 +38,7 @@ fun main() {
     println("   • Registros: $recordCount")
     println()
 
-    val hostname = try {
-        InetAddress.getLocalHost().hostName
-    } catch (e: Exception) { "localhost" }
-    println("   Host detectado: $hostname")
-
-    val isWindows = System.getProperty("os.name").lowercase().contains("win")
-    val destPath = if (isWindows) {
-        Paths.get("\\\\$hostname\\$SHARED_FOLDER_NAME\\articulos.dat")
-    } else {
-        Paths.get("shared", SHARED_FOLDER_NAME, "articulos.dat")
-    }
+    val destPath = Paths.get(SHARED_DATA_PATH)
 
     println("   Destino: $destPath")
     println()

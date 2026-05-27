@@ -20,7 +20,7 @@ fun main() {
     val scanner = Scanner(System.`in`)
 
     println("╔══════════════════════════════════════════════════╗")
-    println("║     MINIMARKET POS - Sistema de Inventario      ║")
+    println("║     MINIMARKET POS - Sistema de Inventario       ║")
     println("║          Arquitectura Unitaria v1.0              ║")
     println("╚══════════════════════════════════════════════════╝")
 

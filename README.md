@@ -1,4 +1,4 @@
-# MinimarketPOS — Sistema de Gestión de Inventario Local
+# MinimarketPOS — Sistema de Gestion de Inventario Local
 
 > **Arquitectura Unitaria con Servidor de Datos Centralizado**  
 > Kotlin (JVM) · RandomAccessFile · SQL Server
@@ -7,7 +7,9 @@
 
 ## Descripción
 
-Sistema de punto de venta monolítico para cadena de minimarkets. Cada estación gestiona su inventario local usando archivos binarios de acceso aleatorio (56 bytes/registro) con un índice `HashMap` en RAM para búsquedas O(1). Al finalizar la jornada, los datos se sincronizan al servidor central SQL Server.
+Sistema de punto de venta monolitico para cadena de minimarkets. Cada estacion gestiona su inventario local usando archivos binarios de acceso aleatorio (56 bytes/registro) con un indice `HashMap` en RAM para busquedas O(1). Al finalizar la jornada, los datos se transfieren a una carpeta compartida y luego se consolidan en SQL Server.
+
+Este repositorio corresponde al **1er entregable: Modelo de Arquitectura Unitaria con Servidor de Datos**.
 
 ## Arquitectura
 
@@ -15,12 +17,18 @@ Sistema de punto de venta monolítico para cadena de minimarkets. Cada estación
 ┌─────────────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
 │      Main.kt            │     │     Send.kt          │     │   Update.kt     │
 │  (CRUD Inventario)      │────▶│  (Transferencia)     │────▶│ (Consolidación) │
-│  RandomAccessFile       │     │  Files.copy()        │     │  JDBC + MERGE   │
+│  RandomAccessFile       │     │  Files.copy()        │     │  JDBC SQL       │
 │  + HashMap Index        │     │  Carpeta compartida  │     │  SQL Server     │
 └─────────────────────────┘     └──────────────────────┘     └─────────────────┘
         │                              │                            │
         ▼                              ▼                            ▼
-  data/articulos.dat          shared/DATOS/articulos.dat      MinimarketDB
+  data/articulos.dat    \\MATHIPC\Users\User\Desktop\DATOS\articulos.dat    MinimarketDB
+```
+
+La carpeta compartida configurada para la transferencia es:
+
+```text
+\\MATHIPC\Users\User\Desktop\DATOS
 ```
 
 ## Estructura del Proyecto
@@ -31,38 +39,103 @@ Sistema de punto de venta monolítico para cadena de minimarkets. Cada estación
 ├── sql/
 │   └── create_database.sql       # Script DDL para SQL Server
 ├── src/main/kotlin/minimarket/
-│   ├── model/
-│   │   └── Articulo.kt           # Data class (56 bytes fijos)
-│   ├── persistence/
-│   │   └── ArchivoArticulos.kt   # I/O + índice HashMap
-│   ├── Main.kt                   # App CRUD interactiva
-│   ├── Send.kt                   # Transferencia de archivos
-│   └── Update.kt                 # Sincronización SQL Server
-├── data/                          # Archivo binario (runtime)
-└── shared/DATOS/                  # Simulación carpeta de red
+│   ├── application/
+│   │   ├── Main.kt               # App CRUD interactiva
+│   │   ├── Send.kt               # Transferencia de archivos
+│   │   └── Update.kt             # Sincronizacion SQL Server
+│   └── data/
+│       ├── model/Articulo.kt     # Data class (56 bytes fijos)
+│       └── persistence/ArchivoArticulos.kt
+└── data/                          # Archivo binario local: articulos.dat
 ```
 
 ## Requisitos
 
 - **JDK 17+**
-- **Microsoft SQL Server** (para el componente Update)
+- **Docker Desktop** (para levantar SQL Server)
 - **Gradle** (incluido via wrapper)
+
+Si Windows usa Java 8 por defecto, configurar `JAVA_HOME` hacia un JDK 17 o superior antes de compilar. Por ejemplo, usando el JDK incluido en IntelliJ:
+
+```powershell
+$env:JAVA_HOME="C:\Users\User\AppData\Local\Programs\IntelliJ IDEA Ultimate\jbr"
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+```
+
+## Configuracion
+
+El componente `Update` se conecta al SQL Server levantado por Docker usando:
+
+```text
+jdbc:sqlserver://localhost:1433;databaseName=MinimarketDB;user=sa;password=DreamTeam_26;trustServerCertificate=true
+```
+
+La ruta local de datos de la aplicacion es:
+
+```text
+data/articulos.dat
+```
 
 ## Ejecución
 
-```bash
-# Compilar el proyecto
-./gradlew build
+### 1. Levantar SQL Server
 
-# Ejecutar la aplicación principal (CRUD)
-./gradlew runMain
-
-# Transferir datos a carpeta compartida
-./gradlew runSend
-
-# Sincronizar con SQL Server
-./gradlew runUpdate
+```powershell
+docker compose up -d
 ```
+
+### 2. Crear la base de datos
+
+Ejecutar el script `sql/create_database.sql` contra el contenedor SQL Server:
+
+```powershell
+docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_database.sql
+```
+
+Si la imagen tiene `sqlcmd` en la ruta antigua, usar:
+
+```powershell
+docker exec -it minimarket_sqlserver /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -i /sql/create_database.sql
+```
+
+### 3. Compilar el proyecto
+
+```powershell
+.\gradlew.bat build
+```
+
+### 4. Ejecutar la aplicacion principal
+
+Permite registrar, consultar, modificar, eliminar y listar articulos en el archivo local `data/articulos.dat`.
+
+```powershell
+.\gradlew.bat runMain
+```
+
+### 5. Transferir datos con Send
+
+`Send` copia `data/articulos.dat` hacia la carpeta compartida `\\MATHIPC\Users\User\Desktop\DATOS`.
+
+```powershell
+.\gradlew.bat runSend
+```
+
+### 6. Consolidar datos con Update
+
+`Update` lee el archivo desde la carpeta compartida y actualiza la tabla `Articulos` en `MinimarketDB`.
+
+```powershell
+.\gradlew.bat runUpdate
+```
+
+## Flujo de validacion del primer entregable
+
+1. Levantar SQL Server con Docker.
+2. Crear la base `MinimarketDB` y la tabla `Articulos`.
+3. Ejecutar `runMain` y registrar articulos.
+4. Ejecutar `runSend` para transferir el archivo local a la carpeta compartida.
+5. Ejecutar `runUpdate` para consolidar los datos en SQL Server.
+6. Consultar la tabla `Articulos` para verificar que los registros fueron insertados o actualizados.
 
 ## Diseño de Registro (56 bytes)
 
@@ -79,5 +152,5 @@ Sistema de punto de venta monolítico para cadena de minimarkets. Cada estación
 |----------------|------------------------------------------------------------------|
 | Disponibilidad | 99.9% local — servidor central no afecta operatividad           |
 | Rendimiento    | Seek directo O(1) via HashMap en RAM                             |
-| Seguridad      | Autenticación integrada Windows para JDBC                        |
+| Seguridad      | Conexion JDBC controlada hacia SQL Server local en Docker        |
 | Integridad     | Eliminación lógica (ID = -1), sin corrupción de bloques         |

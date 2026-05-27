@@ -3,7 +3,6 @@ package minimarket.application
 import minimarket.data.model.Articulo
 import java.io.File
 import java.io.RandomAccessFile
-import java.net.InetAddress
 import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
@@ -12,31 +11,22 @@ import java.sql.DriverManager
  * Componente de Consolidación (Update.EXE)
  *
  * Lee articulos.dat desde la carpeta compartida de red y sincroniza
- * los registros hacia SQL Server usando lógica IF EXISTS (MERGE).
+ * los registros hacia SQL Server usando lógica IF EXISTS.
  *
- * Conexión JDBC con autenticación integrada de Windows.
+ * Conexión JDBC hacia el SQL Server levantado por Docker.
  */
 
-private const val SHARED_FOLDER_NAME = "DATOS"
-private const val DB_NAME = "MinimarketDB"
+private const val SHARED_DATA_PATH = "\\\\MATHIPC\\Users\\User\\Desktop\\DATOS\\articulos.dat"
+private const val JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName=MinimarketDB;user=sa;password=DreamTeam_26;trustServerCertificate=true"
 
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
-    println("║      MINIMARKET POS - Componente UPDATE         ║")
-    println("║        Consolidación SQL Server v1.0            ║")
+    println("║      MINIMARKET POS - Componente UPDATE          ║")
+    println("║        Consolidación SQL Server v1.0             ║")
     println("╚══════════════════════════════════════════════════╝")
     println()
 
-    val hostname = try {
-        InetAddress.getLocalHost().hostName
-    } catch (e: Exception) { "localhost" }
-
-    val isWindows = System.getProperty("os.name").lowercase().contains("win")
-    val sourcePath = if (isWindows) {
-        Paths.get("\\\\$hostname\\$SHARED_FOLDER_NAME\\articulos.dat")
-    } else {
-        Paths.get("shared", SHARED_FOLDER_NAME, "articulos.dat")
-    }
+    val sourcePath = Paths.get(SHARED_DATA_PATH)
 
     val sourceFile = sourcePath.toFile()
     if (!sourceFile.exists()) {
@@ -59,16 +49,10 @@ fun main() {
         return
     }
 
-    val jdbcUrl = if (isWindows) {
-        "jdbc:sqlserver://localhost;databaseName=$DB_NAME;integratedSecurity=true;trustServerCertificate=true"
-    } else {
-        "jdbc:sqlserver://localhost;databaseName=$DB_NAME;user=sa;password=Password123;trustServerCertificate=true"
-    }
-
     println("   Conectando a SQL Server...")
     var connection: Connection? = null
     try {
-        connection = DriverManager.getConnection(jdbcUrl)
+        connection = DriverManager.getConnection(JDBC_URL)
         println("   ✓ Conexión establecida.")
         println()
 

@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     // JDBC Driver para Microsoft SQL Server
-    implementation("com.microsoft.sqlserver:mssql-jdbc:12.4.2.jre11")
+    implementation("com.microsoft.sqlserver:mssql-jdbc:13.2.1.jre11")
 }
 
 kotlin {

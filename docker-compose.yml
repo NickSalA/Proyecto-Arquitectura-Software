@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: minimarket_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=DreamTeam_26
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./sql:/sql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "DreamTeam_26", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
