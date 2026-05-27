@@ -4,21 +4,8 @@ import minimarket.data.model.Articulo
 import java.io.File
 import java.io.RandomAccessFile
 
-/**
- * Capa de persistencia local basada en archivo binario de acceso aleatorio.
- *
- * Mantiene un índice en memoria (HashMap<Int, Long>) que mapea el ID de cada
- * artículo a su offset (posición en bytes) dentro del archivo, permitiendo
- * operaciones de lectura posicional directa con seek() en tiempo O(1).
- *
- * Estrategia de eliminación: se usa "eliminación lógica" sobreescribiendo
- * el campo ID con el valor -1, preservando la integridad del bloque de bytes.
- *
- * @param rutaArchivo Ruta al archivo binario de datos (ej: "data/articulos.dat").
- */
 class ArchivoArticulos(private val rutaArchivo: String) {
 
-    /** Índice en memoria: ID del artículo → posición (offset) en el archivo. */
     private val indice: HashMap<Int, Long> = HashMap()
 
     init {
@@ -37,10 +24,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
     // GESTIÓN DEL ÍNDICE
     // =========================================================================
 
-    /**
-     * Recorre el archivo completo y construye el HashMap de índice,
-     * omitiendo registros con ID == -1 (eliminados lógicamente).
-     */
     private fun cargarIndice() {
         val raf = RandomAccessFile(rutaArchivo, "r")
         try {
@@ -66,12 +49,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
     // OPERACIONES CRUD
     // =========================================================================
 
-    /**
-     * Agrega un nuevo artículo al final del archivo.
-     *
-     * @param articulo Artículo a registrar.
-     * @return true si se registró exitosamente, false si el ID ya existe.
-     */
     fun agregar(articulo: Articulo): Boolean {
         if (indice.containsKey(articulo.id)) {
             return false // ID duplicado
@@ -89,13 +66,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
         }
     }
 
-    /**
-     * Busca un artículo por su ID usando el índice en memoria.
-     * Realiza un seek() directo al offset correspondiente → O(1) en disco.
-     *
-     * @param id Identificador del artículo.
-     * @return El artículo encontrado, o null si no existe.
-     */
     fun buscar(id: Int): Articulo? {
         val offset = indice[id] ?: return null
 
@@ -108,11 +78,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
         }
     }
 
-    /**
-     * Lista todos los artículos activos (no eliminados lógicamente).
-     *
-     * @return Lista inmutable de artículos válidos.
-     */
     fun listar(): List<Articulo> {
         val articulos = mutableListOf<Articulo>()
 
@@ -142,13 +107,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
         return articulos
     }
 
-    /**
-     * Actualiza un artículo existente, sobreescribiendo sus datos
-     * en la misma posición del archivo (in-place update).
-     *
-     * @param articulo Artículo con datos actualizados (mismo ID).
-     * @return true si se actualizó, false si el ID no existe.
-     */
     fun actualizar(articulo: Articulo): Boolean {
         val offset = indice[articulo.id] ?: return false
 
@@ -162,14 +120,6 @@ class ArchivoArticulos(private val rutaArchivo: String) {
         }
     }
 
-    /**
-     * Elimina lógicamente un artículo, sobreescribiendo su ID con -1.
-     * El espacio en disco se preserva para mantener la integridad
-     * de los offsets de los demás registros.
-     *
-     * @param id Identificador del artículo a eliminar.
-     * @return true si se eliminó, false si el ID no existe.
-     */
     fun eliminar(id: Int): Boolean {
         val offset = indice[id] ?: return false
 
@@ -184,13 +134,7 @@ class ArchivoArticulos(private val rutaArchivo: String) {
         }
     }
 
-    /**
-     * Retorna la cantidad de artículos activos en el sistema.
-     */
     fun cantidad(): Int = indice.size
 
-    /**
-     * Verifica si un ID ya está registrado.
-     */
     fun existe(id: Int): Boolean = indice.containsKey(id)
 }

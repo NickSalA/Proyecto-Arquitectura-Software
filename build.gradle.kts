@@ -29,7 +29,7 @@ application {
 
 tasks.register<JavaExec>("runMain") {
     group = "application"
-    description = "Ejecuta la aplicación principal de gestión de inventario"
+    description = "Ejecuta la interfaz gráfica principal de gestión de inventario"
     mainClass.set("minimarket.application.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
