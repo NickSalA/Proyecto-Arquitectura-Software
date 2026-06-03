@@ -7,15 +7,6 @@ import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.DriverManager
 
-/**
- * Componente de Consolidación (Update.EXE)
- *
- * Lee articulos.dat desde la carpeta compartida de red y sincroniza
- * los registros hacia SQL Server usando lógica IF EXISTS.
- *
- * Conexión JDBC hacia el SQL Server levantado por Docker.
- */
-
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
     println("║      MINIMARKET POS - Componente UPDATE          ║")

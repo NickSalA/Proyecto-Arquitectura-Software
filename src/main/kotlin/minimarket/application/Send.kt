@@ -5,13 +5,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
-/**
- * Componente de Transferencia (Send.EXE)
- *
- * Copia articulos.dat a una carpeta compartida de red.
- * Usa la ruta UNC configurada para el primer entregable.
- */
-
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
     println("║       MINIMARKET POS - Componente SEND           ║")

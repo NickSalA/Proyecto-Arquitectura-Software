@@ -1,7 +1,7 @@
 package minimarket.application
 
 import minimarket.data.model.Articulo
-import minimarket.data.persistence.ArchivoArticulos
+import minimarket.data.persistence.RepositorioArticulosSQL
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -41,7 +41,7 @@ fun main() {
 }
 
 private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
-    private val repository = ArchivoArticulos(AppConfig.LOCAL_DATA_PATH)
+    private val repository = RepositorioArticulosSQL()
 
     private val idField = JTextField()
     private val descriptionField = JTextField()
@@ -115,7 +115,7 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
                 add(subtitleLabel)
             }
 
-            val badge = JLabel("Entregable 1", SwingConstants.CENTER).apply {
+            val badge = JLabel("Entregable 2", SwingConstants.CENTER).apply {
                 foreground = UiColors.primaryDark
                 background = Color.WHITE
                 isOpaque = true
@@ -179,11 +179,11 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
                 BorderFactory.createMatteBorder(1, 0, 0, 0, UiColors.border),
                 EmptyBorder(18, 0, 0, 0)
             )
-            add(infoLabel("Archivo local"))
-            add(infoValue(AppConfig.LOCAL_DATA_PATH))
+            add(infoLabel("Base de datos"))
+            add(infoValue("MinimarketDB (SQL Server)"))
             add(Box.createVerticalStrut(12))
-            add(infoLabel("Carpeta compartida"))
-            add(infoValue(AppConfig.sharedDataPath))
+            add(infoLabel("Conexion JDBC"))
+            add(infoValue("localhost:1433"))
         }
 
         val body = JPanel().apply {
