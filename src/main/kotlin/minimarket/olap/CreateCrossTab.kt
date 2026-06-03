@@ -26,7 +26,10 @@ fun main() {
     println("Construyendo consulta PIVOT dinamica...")
     val columnasPivot = fechas.joinToString(", ") { "[$it]" }
     val pivotQuery = """
-        CREATE OR ALTER VIEW Vista_Stock_Cruzado AS
+        IF EXISTS (SELECT * FROM sys.views WHERE name = 'Vista_Stock_Cruzado')
+            DROP VIEW Vista_Stock_Cruzado;
+        EXEC('
+        CREATE VIEW Vista_Stock_Cruzado AS
         SELECT
             da.ArticuloID AS [ID],
             da.Descripcion AS [Articulo],
@@ -41,6 +44,7 @@ fun main() {
             SUM(fi.Stock)
             FOR dt.Fecha IN ($columnasPivot)
         ) AS pvt
+        ');
     """.trimIndent()
     println()
 
@@ -50,7 +54,51 @@ fun main() {
     try {
         conn = DriverManager.getConnection(AppConfig.JDBC_URL_DW)
         stmt = conn.createStatement()
-        stmt.executeUpdate(pivotQuery)
+
+        if (fechas.size == 1) {
+            val fecha = fechas[0]
+            stmt.executeUpdate("DROP VIEW IF EXISTS Vista_Stock_Cruzado")
+            val createSQL = """
+                CREATE VIEW Vista_Stock_Cruzado AS
+                SELECT
+                    da.ArticuloID AS ID,
+                    da.Descripcion AS Articulo,
+                    SUM(fi.Stock) AS [$fecha]
+                FROM
+                    Fact_Inventario fi
+                    INNER JOIN Dim_Articulo da ON fi.ArticuloKey = da.ArticuloKey
+                    INNER JOIN Dim_Tiempo dt ON fi.TiempoKey = dt.TiempoKey
+                WHERE dt.Fecha = '$fecha'
+                GROUP BY
+                    da.ArticuloID, da.Descripcion
+            """.trimIndent()
+            stmt.executeUpdate(createSQL)
+        } else {
+            val columnasPivot = fechas.joinToString(", ") { "SUM(fi.Stock) AS [$it]" }
+            val columnasGroup = "da.ArticuloID, da.Descripcion"
+            val pivotCols = fechas.joinToString(", ") { "[$it]" }
+
+            val createSQL = """
+                EXEC('
+                CREATE VIEW Vista_Stock_Cruzado AS
+                SELECT
+                    da.ArticuloID AS ID,
+                    da.Descripcion AS Articulo,
+                    $columnasPivot
+                FROM
+                    Fact_Inventario fi
+                    INNER JOIN Dim_Articulo da ON fi.ArticuloKey = da.ArticuloKey
+                    INNER JOIN Dim_Tiempo dt ON fi.TiempoKey = dt.TiempoKey
+                GROUP BY
+                    $columnasGroup
+                PIVOT (
+                    SUM(fi.Stock)
+                    FOR dt.Fecha IN ($pivotCols)
+                ) AS pvt
+                '')
+            """.trimIndent()
+            stmt.executeUpdate(createSQL)
+        }
         println()
         println("═════════════ VISTA CREADA ═════════════")
         println("   Nombre: Vista_Stock_Cruzado")

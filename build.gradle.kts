@@ -33,4 +33,44 @@ tasks.register<JavaExec>("runMain") {
     mainClass.set("minimarket.application.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
+    environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
+    environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
+    environment("DB_USER", System.getenv("DB_USER") ?: "sa")
+    environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
+}
+
+tasks.register<JavaExec>("runGenerarDatawareHouse") {
+    group = "application"
+    description = "Ejecuta el proceso ETL para generar el DataWarehouse"
+    mainClass.set("minimarket.etl.GenerarDatawareHouseKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    standardInput = System.`in`
+    environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
+    environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
+    environment("DB_USER", System.getenv("DB_USER") ?: "sa")
+    environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
+}
+
+tasks.register<JavaExec>("runCreateCrossTab") {
+    group = "application"
+    description = "Ejecuta la creación de la vista OLAP (CrossTab)"
+    mainClass.set("minimarket.olap.CreateCrossTabKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    standardInput = System.`in`
+    environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
+    environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
+    environment("DB_USER", System.getenv("DB_USER") ?: "sa")
+    environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
+}
+
+tasks.register<JavaExec>("runViewCrossTab") {
+    group = "application"
+    description = "Ejecuta la visualización del cubo OLAP"
+    mainClass.set("minimarket.olap.ViewCrossTabKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    standardInput = System.`in`
+    environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
+    environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
+    environment("DB_USER", System.getenv("DB_USER") ?: "sa")
+    environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
 }
