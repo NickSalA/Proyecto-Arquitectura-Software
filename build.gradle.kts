@@ -24,7 +24,7 @@ application {
 }
 
 // --------------------------------------------------
-// Tareas para ejecutar cada componente por separado
+// Tareas para ejecutar componentes del Entregable 2
 // --------------------------------------------------
 
 tasks.register<JavaExec>("runMain") {
@@ -33,25 +33,4 @@ tasks.register<JavaExec>("runMain") {
     mainClass.set("minimarket.application.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
-}
-
-tasks.register<JavaExec>("runSend") {
-    group = "application"
-    description = "Ejecuta el componente de transferencia (Send)"
-    mainClass.set("minimarket.application.SendKt")
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
-tasks.register<JavaExec>("runUpdate") {
-    group = "application"
-    description = "Ejecuta el componente de consolidación (Update)"
-    mainClass.set("minimarket.application.UpdateKt")
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
-// Crear directorio de datos al compilar
-tasks.named("build") {
-    doLast {
-        file("data").mkdirs()
-    }
 }

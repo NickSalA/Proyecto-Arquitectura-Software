@@ -1,11 +1,16 @@
 package minimarket.application
 
 object AppConfig {
-    const val LOCAL_DATA_PATH = "data/articulos.dat"
-    const val DEFAULT_SHARED_DATA_PATH = "\\\\MATHIPC\\Users\\User\\Desktop\\DATOS\\articulos.dat"
-    const val JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName=MinimarketDB;user=sa;password=DreamTeam_26;trustServerCertificate=true"
-    const val JDBC_URL_DW = "jdbc:sqlserver://localhost:1433;databaseName=MinimarketDW;user=sa;password=DreamTeam_26;trustServerCertificate=true"
+    private val dbHost = System.getenv("DB_HOST")?.takeIf { it.isNotBlank() } ?: "MATHIPC"
+    private val dbPort = System.getenv("DB_PORT")?.takeIf { it.isNotBlank() } ?: "1433"
+    private val dbUser = System.getenv("DB_USER")?.takeIf { it.isNotBlank() } ?: "sa"
+    private val dbPassword = System.getenv("DB_PASSWORD")?.takeIf { it.isNotBlank() } ?: "DreamTeam_26"
 
-    val sharedDataPath: String = System.getenv("SHARED_DATA_PATH")?.takeIf { it.isNotBlank() }
-        ?: DEFAULT_SHARED_DATA_PATH
+    val DB_DISPLAY = "$dbHost:$dbPort"
+    val JDBC_URL = buildJdbcUrl("MinimarketDB")
+    val JDBC_URL_DW = buildJdbcUrl("MinimarketDW")
+
+    private fun buildJdbcUrl(databaseName: String): String {
+        return "jdbc:sqlserver://$dbHost:$dbPort;databaseName=$databaseName;user=$dbUser;password=$dbPassword;trustServerCertificate=true"
+    }
 }

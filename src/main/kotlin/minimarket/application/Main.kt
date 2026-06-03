@@ -183,7 +183,7 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
             add(infoValue("MinimarketDB (SQL Server)"))
             add(Box.createVerticalStrut(12))
             add(infoLabel("Conexion JDBC"))
-            add(infoValue("localhost:1433"))
+            add(infoValue(AppConfig.DB_DISPLAY))
         }
 
         val body = JPanel().apply {
@@ -370,7 +370,7 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
         tableModel.setRowCount(0)
         val articles = repository.listar()
         for (article in articles) {
-            tableModel.addRow(arrayOf(article.id, article.descripcion, article.precio, article.stock))
+            tableModel.addRow(arrayOf<Any>(article.id, article.descripcion, article.precio, article.stock))
         }
         statusLabel.text = "$message. Articulos activos: ${articles.size}."
     }
