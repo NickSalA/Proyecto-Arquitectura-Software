@@ -3,9 +3,8 @@ package minimarket.data.model
 /**
  * Entidad inmutable que representa un artículo del inventario.
  *
- * En el Entregable 2 este modelo se transporta entre la interfaz Swing, el
- * repositorio JDBC y el ETL. La persistencia ya no se realiza en archivos .dat,
- * sino en SQL Server mediante RepositorioArticulosSQL.
+ * En el Entregable 3 este modelo se transporta entre la vista MVC, los servicios,
+ * el repositorio JDBC, la exportacion FTP, el Mirror y el ETL del DataWarehouse.
  */
 data class Articulo(
     val id: Int,

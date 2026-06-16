@@ -102,7 +102,7 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
                 font = Font("Segoe UI", Font.BOLD, 33)
             }
 
-            val subtitleLabel = JLabel("Inventario local con archivo aleatorio indexado").apply {
+            val subtitleLabel = JLabel("Cliente Swing legado conectado a SQL Server").apply {
                 foreground = Color(219, 234, 254)
                 font = Font("Segoe UI", Font.PLAIN, 15)
             }
@@ -115,7 +115,7 @@ private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
                 add(subtitleLabel)
             }
 
-            val badge = JLabel("Entregable 2", SwingConstants.CENTER).apply {
+            val badge = JLabel("Entregable 3", SwingConstants.CENTER).apply {
                 foreground = UiColors.primaryDark
                 background = Color.WHITE
                 isOpaque = true

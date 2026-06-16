@@ -12,7 +12,23 @@ services:
     volumes:
       - ./sql:/sql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "DreamTeam_26", "-Q", "SELECT 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'DreamTeam_26' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'DreamTeam_26' -Q 'SELECT 1'"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+  ftp:
+    image: fauria/vsftpd
+    container_name: minimarket_ftp
+    environment:
+      - FTP_USER=minimarket
+      - FTP_PASS=minimarket123
+      - PASV_ADDRESS=127.0.0.1
+      - PASV_MIN_PORT=21100
+      - PASV_MAX_PORT=21110
+      - LOCAL_UMASK=022
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    volumes:
+      - ./ftp:/home/vsftpd/minimarket

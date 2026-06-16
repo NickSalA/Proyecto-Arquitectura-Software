@@ -1,236 +1,169 @@
-# MinimarketPOS — Sistema de Gestion de Inventario Local
+# MinimarketPOS - Entregable 3
 
-> **Arquitectura Unitaria con Servidor de Datos Centralizado**  
-> Kotlin (JVM) · RandomAccessFile · SQL Server
+> Modelo de Arquitectura MVC con N Capas: Aplicacion, Datos, FTP, Mirror y DataWarehouse.
 
----
+## Descripcion
 
-## Descripción
-
-Sistema de punto de venta monolitico para cadena de minimarkets. Cada estacion gestiona su inventario local usando archivos binarios de acceso aleatorio (56 bytes/registro) con un indice `HashMap` en RAM para busquedas O(1). Al finalizar la jornada, los datos se transfieren a una carpeta compartida y luego se consolidan en SQL Server.
-
-Este repositorio corresponde al **1er entregable: Modelo de Arquitectura Unitaria con Servidor de Datos**.
+MinimarketPOS es un sistema de gestion de inventario para una cadena de minimarkets. En este entregable la aplicacion se expone como una solucion Web MVC, mantiene sus datos operacionales en SQL Server, publica una copia por FTP, sincroniza una base Mirror y alimenta un DataWarehouse para consultas OLAP.
 
 ## Arquitectura
 
-```
-┌─────────────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│      Main.kt            │     │     Send.kt          │     │   Update.kt     │
-│  (CRUD Inventario)      │────▶│  (Transferencia)     │────▶│ (Consolidación) │
-│  RandomAccessFile       │     │  Files.copy()        │     │  JDBC SQL       │
-│  + HashMap Index        │     │  Carpeta compartida  │     │  SQL Server     │
-└─────────────────────────┘     └──────────────────────┘     └─────────────────┘
-        │                              │                            │
-        ▼                              ▼                            ▼
-  data/articulos.dat    \\MATHIPC\Users\User\Desktop\DATOS\articulos.dat    MinimarketDB
-```
-
-La carpeta compartida configurada para la transferencia es:
-
 ```text
-\\MATHIPC\Users\User\Desktop\DATOS
+Cliente Web
+   -> Vista Thymeleaf / HTML / CSS
+   -> Controller MVC
+   -> Service
+   -> Repository JDBC
+   -> MinimarketDB
+   -> ExportarFTP
+   -> Servidor FTP Docker
+   -> ActualizarMirror
+   -> MinimarketMirror
+   -> GenerarDatawareHouse
+   -> MinimarketDW
+   -> CreateCrossTab / ViewCrossTab
 ```
 
-## Estructura del Proyecto
+## Componentes
 
-```
-├── build.gradle.kts              # Build system con Kotlin JVM
-├── settings.gradle.kts
-├── sql/
-│   └── create_database.sql       # Script DDL para SQL Server
-├── src/main/kotlin/minimarket/
-│   ├── application/
-│   │   ├── AppConfig.kt          # Configuracion compartida de rutas y JDBC
-│   │   ├── Main.kt               # Interfaz grafica CRUD
-│   │   ├── Send.kt               # Transferencia de archivos
-│   │   └── Update.kt             # Sincronizacion SQL Server
-│   └── data/
-│       ├── model/Articulo.kt     # Data class (56 bytes fijos)
-│       └── persistence/ArchivoArticulos.kt
-└── data/                          # Archivo binario local: articulos.dat
-```
+| Componente | Ruta | Responsabilidad |
+|------------|------|-----------------|
+| Web MVC | `src/main/kotlin/minimarket/web` | Controladores Spring MVC y arranque web |
+| Vistas | `src/main/resources/templates` | Interfaz HTML Thymeleaf |
+| Estilos | `src/main/resources/static/css` | Presentacion de la aplicacion web |
+| Service | `src/main/kotlin/minimarket/service` | Validaciones y reglas de negocio |
+| Repository | `src/main/kotlin/minimarket/data/persistence` | Acceso JDBC a SQL Server |
+| FTP | `src/main/kotlin/minimarket/ftp/ExportarFTP.kt` | Exporta datos a `articulos.csv` en FTP |
+| Mirror | `src/main/kotlin/minimarket/mirror/ActualizarMirror.kt` | Descarga CSV y sincroniza `MinimarketMirror` |
+| ETL | `src/main/kotlin/minimarket/etl` | Carga `MinimarketDW` desde Mirror |
+| OLAP | `src/main/kotlin/minimarket/olap` | Crea y visualiza CrossTab |
 
 ## Requisitos
 
-- **JDK 17+**
-- **Docker Desktop** (para levantar SQL Server)
-- **Gradle** (incluido via wrapper)
+- JDK 17+
+- Docker y Docker Compose
+- Gradle o wrapper disponible
 
-Si Windows usa Java 8 por defecto, configurar `JAVA_HOME` hacia un JDK 17 o superior antes de compilar. Por ejemplo, usando el JDK incluido en IntelliJ:
-
-```powershell
-$env:JAVA_HOME="C:\Users\User\AppData\Local\Programs\IntelliJ IDEA Ultimate\jbr"
-$env:Path="$env:JAVA_HOME\bin;$env:Path"
-```
-
-## Configuracion
-
-El componente `Update` se conecta al SQL Server levantado por Docker usando:
-
-```text
-jdbc:sqlserver://localhost:1433;databaseName=MinimarketDB;user=sa;password=DreamTeam_26;trustServerCertificate=true
-```
-
-La ruta local de datos de la aplicacion es:
-
-```text
-data/articulos.dat
-```
-
-La ruta compartida por defecto, validada en Windows, es:
-
-```text
-\\MATHIPC\Users\User\Desktop\DATOS\articulos.dat
-```
-
-Si se necesita ejecutar en otra maquina o sistema operativo, se puede cambiar la ruta compartida con la variable de entorno `SHARED_DATA_PATH` sin modificar el codigo.
-
-En Windows PowerShell:
-
-```powershell
-$env:SHARED_DATA_PATH="\\MATHIPC\Users\User\Desktop\DATOS\articulos.dat"
-```
-
-En Linux Mint:
+Este repositorio incluye una distribucion local en `.gradle-local/gradle-8.10.2`. Si `./gradlew` falla por falta de `gradle/wrapper/gradle-wrapper.jar`, usar:
 
 ```bash
-export SHARED_DATA_PATH="/mnt/datos/articulos.dat"
+JAVA_HOME="$PWD/.jdk-local/jdk-17.0.19+10" PATH="$PWD/.jdk-local/jdk-17.0.19+10/bin:$PATH" .gradle-local/gradle-8.10.2/bin/gradle build
 ```
 
-## Ejecución
+## Infraestructura Docker
 
-### 1. Levantar SQL Server
+El archivo `docker-compose.yml` levanta:
 
-```powershell
+- `minimarket_sqlserver`: SQL Server 2022 en el puerto `1433`.
+- `minimarket_ftp`: servidor FTP en el puerto `21` con rango pasivo `21100-21110`.
+
+Credenciales por defecto:
+
+```text
+SQL Server:
+user: sa
+password: DreamTeam_26
+
+FTP:
+host: localhost
+user: minimarket
+password: minimarket123
+archivo remoto: /articulos.csv
+```
+
+## Ejecucion
+
+### 1. Levantar infraestructura
+
+```bash
 docker compose up -d
 ```
 
-### 2. Crear la base de datos
+### 2. Crear bases de datos
 
-Ejecutar el script `sql/create_database.sql` contra el contenedor SQL Server:
-
-```powershell
+```bash
 docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_database.sql
+docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_mirror.sql
+docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_datawarehouse.sql
 ```
 
-Si la imagen tiene `sqlcmd` en la ruta antigua, usar:
+Si la imagen tiene `sqlcmd` en la ruta antigua, usar `/opt/mssql-tools/bin/sqlcmd`.
 
-```powershell
-docker exec -it minimarket_sqlserver /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -i /sql/create_database.sql
-```
-
-### 3. Compilar el proyecto
-
-```powershell
-.\gradlew.bat build
-```
-
-### 4. Ejecutar la aplicacion principal
-
-Abre una interfaz grafica para registrar, consultar, modificar, eliminar y listar articulos en el archivo local `data/articulos.dat`.
-
-```powershell
-.\gradlew.bat runMain
-```
-
-### 5. Transferir datos con Send
-
-`Send` copia `data/articulos.dat` hacia la carpeta compartida configurada. En Windows, por defecto usa `\\MATHIPC\Users\User\Desktop\DATOS`.
-
-```powershell
-.\gradlew.bat runSend
-```
-
-### 6. Consolidar datos con Update
-
-`Update` lee el archivo desde la carpeta compartida y sincroniza la tabla `Articulos` en `MinimarketDB`. Inserta nuevos articulos, actualiza los existentes y elimina de SQL Server los registros que ya no esten activos en el archivo local.
-
-```powershell
-.\gradlew.bat runUpdate
-```
-
-## Flujo de validacion del primer entregable
-
-1. Levantar SQL Server con Docker.
-2. Crear la base `MinimarketDB` y la tabla `Articulos`.
-3. Ejecutar `runMain`, abrir la interfaz grafica y registrar articulos.
-4. Ejecutar `runSend` para transferir el archivo local a la carpeta compartida.
-5. Ejecutar `runUpdate` para consolidar los datos en SQL Server, incluyendo eliminaciones logicas realizadas localmente.
-6. Consultar la tabla `Articulos` para verificar que los registros fueron insertados o actualizados.
-
-## Ejecucion En Linux Mint
-
-En Linux Mint se puede ejecutar el mismo proyecto, pero la carpeta compartida de Windows debe montarse como una ruta local usando SMB/CIFS. La ruta UNC de Windows `\\MATHIPC\Users\User\Desktop\DATOS` se representa como `//MATHIPC/Users/User/Desktop/DATOS` al montarla.
-
-### 1. Instalar dependencias
+### 3. Ejecutar aplicacion Web MVC
 
 ```bash
-sudo apt update
-sudo apt install -y openjdk-17-jdk docker.io docker-compose-plugin cifs-utils
+./gradlew runWeb
 ```
 
-### 2. Montar la carpeta compartida
+Comando alternativo si el wrapper no esta disponible:
 
 ```bash
-sudo mkdir -p /mnt/datos
-sudo mount -t cifs //MATHIPC/Users/User/Desktop/DATOS /mnt/datos -o username=TU_USUARIO,password=TU_PASSWORD,vers=3.0
+JAVA_HOME="$PWD/.jdk-local/jdk-17.0.19+10" PATH="$PWD/.jdk-local/jdk-17.0.19+10/bin:$PATH" .gradle-local/gradle-8.10.2/bin/gradle runWeb
 ```
 
-Si la carpeta compartida no tiene credenciales, probar:
+Abrir:
+
+```text
+http://localhost:8080/articulos
+```
+
+### 4. Exportar datos al FTP
 
 ```bash
-sudo mount -t cifs //MATHIPC/Users/User/Desktop/DATOS /mnt/datos -o guest,vers=3.0
+./gradlew runExportarFTP
 ```
 
-Verificar que el montaje funciona:
+Este comando lee `MinimarketDB.Articulos`, genera `articulos.csv` y lo sube al servidor FTP Docker.
+
+### 5. Actualizar Mirror desde FTP
 
 ```bash
-ls -la /mnt/datos
+./gradlew runActualizarMirror
 ```
 
-### 3. Configurar la ruta para Send y Update
+Este comando descarga `/articulos.csv` desde FTP y sincroniza `MinimarketMirror.ArticulosMirror`.
+
+### 6. Generar DataWarehouse
 
 ```bash
-export SHARED_DATA_PATH="/mnt/datos/articulos.dat"
+./gradlew runGenerarDatawareHouse
 ```
 
-### 4. Levantar SQL Server y crear la base
+El ETL toma como origen los articulos activos de `MinimarketMirror`.
 
+### 7. Crear y visualizar CrossTab
 
 ```bash
-docker compose up -d
-docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -i /sql/create_database.sql
+./gradlew runCreateCrossTab
+./gradlew runViewCrossTab
 ```
 
-### 5. Ejecutar el flujo
+## Variables de entorno
 
-```bash
-./gradlew build
-./gradlew runMain
-./gradlew runSend
-./gradlew runUpdate
+| Variable | Valor por defecto |
+|----------|-------------------|
+| `DB_HOST` | `localhost` en tareas Gradle |
+| `DB_PORT` | `1433` |
+| `DB_USER` | `sa` |
+| `DB_PASSWORD` | `DreamTeam_26` |
+| `FTP_HOST` | `localhost` |
+| `FTP_PORT` | `21` |
+| `FTP_USER` | `minimarket` |
+| `FTP_PASSWORD` | `minimarket123` |
+| `FTP_REMOTE_FILE` | `/articulos.csv` |
+
+## Scripts SQL
+
+| Script | Base | Uso |
+|--------|------|-----|
+| `sql/create_database.sql` | `MinimarketDB` | Base operacional |
+| `sql/create_mirror.sql` | `MinimarketMirror` | Base espejo alimentada por FTP |
+| `sql/create_datawarehouse.sql` | `MinimarketDW` | Modelo estrella para analitica |
+
+## Documentacion
+
+El documento tecnico del Entregable 3 esta en:
+
+```text
+docs/entregable3-arquitectura.md
 ```
-
-### 6. Consultar SQL Server
-
-```bash
-docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "DreamTeam_26" -C -d MinimarketDB -Q "SELECT * FROM Articulos"
-```
-
-## Diseño de Registro (56 bytes)
-
-| Campo       | Tipo Kotlin | Tamaño |
-|-------------|-------------|--------|
-| ID          | `Int`       | 4 B    |
-| Descripción | `String`    | 40 B   |
-| Precio      | `Double`    | 8 B    |
-| Stock       | `Int`       | 4 B    |
-
-## Atributos de Calidad
-
-| Atributo       | Implementación                                                   |
-|----------------|------------------------------------------------------------------|
-| Disponibilidad | 99.9% local — servidor central no afecta operatividad           |
-| Rendimiento    | Seek directo O(1) via HashMap en RAM                             |
-| Seguridad      | Conexion JDBC controlada hacia SQL Server local en Docker        |
-| Integridad     | Eliminación lógica (ID = -1), sin corrupción de bloques         |

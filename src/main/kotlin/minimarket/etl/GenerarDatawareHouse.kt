@@ -9,10 +9,10 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 
 /**
- * Proceso ETL del Entregable 2.
+ * Proceso ETL del Entregable 3.
  *
  * Flujo general:
- * 1. Extrae articulos desde MinimarketDB, que es la base operacional usada por el cliente Swing.
+ * 1. Extrae articulos activos desde MinimarketMirror, alimentado por el archivo recibido via FTP.
  * 2. Crea o recupera la fecha actual en Dim_Tiempo del Datawarehouse.
  * 3. Sincroniza Dim_Articulo usando MERGE, equivalente a un UPSERT en SQL Server.
  * 4. Carga Fact_Inventario usando MERGE para insertar o actualizar el stock del dia.
@@ -28,13 +28,13 @@ fun main() {
     println("╚══════════════════════════════════════════════════╝")
     println()
 
-    println("Paso 1: Extrayendo articulos desde MinimarketDB...")
+    println("Paso 1: Extrayendo articulos activos desde MinimarketMirror...")
     val articulos = extraerArticulos()
     println("   -> Articulos encontrados: ${articulos.size}")
     println()
 
     if (articulos.isEmpty()) {
-        println("   No hay articulos para procesar. Ejecute la aplicacion principal primero.")
+        println("   No hay articulos para procesar. Ejecute primero ExportarFTP y ActualizarMirror.")
         return
     }
 
@@ -74,8 +74,8 @@ fun main() {
 /**
  * Fase Extract.
  *
- * Lee la tabla Articulos desde MinimarketDB mediante JDBC. Esta consulta es la frontera entre
- * el sistema transaccional Cliente/Servidor y el proceso analitico; por eso solo se extraen las
+ * Lee la tabla ArticulosMirror desde MinimarketMirror mediante JDBC. Esta consulta es la frontera
+ * entre la capa Mirror y el proceso analitico; por eso solo se extraen articulos activos y las
  * columnas necesarias para dimensiones y hechos: ID, Descripcion, Precio y Stock.
  */
 private fun extraerArticulos(): List<Articulo> {
@@ -84,8 +84,10 @@ private fun extraerArticulos(): List<Articulo> {
     var stmt: PreparedStatement? = null
     var rs: ResultSet? = null
     try {
-        conn = DriverManager.getConnection(AppConfig.JDBC_URL)
-        stmt = conn.prepareStatement("SELECT ID, Descripcion, Precio, Stock FROM Articulos ORDER BY ID")
+        conn = DriverManager.getConnection(AppConfig.JDBC_URL_MIRROR)
+        stmt = conn.prepareStatement(
+            "SELECT ID, Descripcion, Precio, Stock FROM ArticulosMirror WHERE Activo = 1 ORDER BY ID"
+        )
         rs = stmt.executeQuery()
         while (rs.next()) {
             articulos.add(

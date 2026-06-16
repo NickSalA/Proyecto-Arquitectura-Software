@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinimarketPOS - Entregable 3</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="shell">
+    <section class="hero">
+        <div>
+            <p class="eyebrow">Arquitectura MVC con N Capas</p>
+            <h1>MinimarketPOS Web</h1>
+            <p class="hero-copy">
+                Aplicacion web MVC conectada a SQL Server, con transferencia FTP,
+                Mirror y DataWarehouse para explotacion OLAP.
+            </p>
+        </div>
+        <div class="status-card">
+            <span>Entregable 3</span>
+            <strong th:text="${dbDisplay}">localhost:1433</strong>
+            <small>FTP: <span th:text="${ftpDisplay}">localhost:21</span></small>
+        </div>
+    </section>
+
+    <div th:if="${success}" class="alert success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+    <section class="grid">
+        <article class="panel form-panel">
+            <div class="panel-heading">
+                <p class="eyebrow" th:text="${editId == null ? 'Nuevo registro' : 'Edicion'}">Nuevo registro</p>
+                <h2 th:text="${editId == null ? 'Registrar articulo' : 'Actualizar articulo'}">Registrar articulo</h2>
+            </div>
+
+            <form method="post" th:object="${articuloForm}"
+                  th:action="${editId == null} ? @{/articulos} : @{/articulos/{id}(id=${editId})}">
+                <label>
+                    ID
+                    <input type="number" min="1" required th:field="*{id}" th:readonly="${editId != null}">
+                </label>
+                <label>
+                    Descripcion
+                    <input type="text" maxlength="50" required th:field="*{descripcion}">
+                </label>
+                <label>
+                    Precio
+                    <input type="number" min="0" step="0.01" required th:field="*{precio}">
+                </label>
+                <label>
+                    Stock
+                    <input type="number" min="0" required th:field="*{stock}">
+                </label>
+
+                <div class="actions">
+                    <button type="submit" class="primary" th:text="${editId == null ? 'Registrar' : 'Guardar cambios'}">
+                        Registrar
+                    </button>
+                    <a th:href="@{/articulos}" class="secondary">Limpiar</a>
+                </div>
+            </form>
+        </article>
+
+        <article class="panel table-panel">
+            <div class="panel-heading table-heading">
+                <div>
+                    <p class="eyebrow">Datos operacionales</p>
+                    <h2>Inventario activo</h2>
+                </div>
+                <span class="counter" th:text="${#lists.size(articulos)} + ' articulos'">0 articulos</span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Descripcion</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(articulos)}">
+                        <td colspan="5" class="empty">No hay articulos registrados.</td>
+                    </tr>
+                    <tr th:each="articulo : ${articulos}">
+                        <td th:text="${articulo.id}">1</td>
+                        <td th:text="${articulo.descripcion}">Arroz</td>
+                        <td th:text="${#numbers.formatDecimal(articulo.precio, 1, 2)}">5.50</td>
+                        <td th:text="${articulo.stock}">20</td>
+                        <td class="row-actions">
+                            <a th:href="@{/articulos/{id}/editar(id=${articulo.id})}" class="link-button">Editar</a>
+                            <form method="post" th:action="@{/articulos/{id}/eliminar(id=${articulo.id})}">
+                                <button type="submit" class="danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+
+    <section class="flow panel">
+        <p class="eyebrow">Flujo del entregable</p>
+        <div class="steps">
+            <span>Web MVC</span>
+            <span>MinimarketDB</span>
+            <span>FTP Docker</span>
+            <span>Mirror</span>
+            <span>DataWarehouse</span>
+            <span>OLAP</span>
+        </div>
+    </section>
+</main>
+</body>
+</html>

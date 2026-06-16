@@ -35,9 +35,17 @@ data/*.dat
 # Shared network folder (simulated)
 shared/
 
+# FTP runtime volume
+ftp/
+
 # JDBC driver
 lib/
 
 # Gradle build output
 build/
 .gradle/
+.gradle-local/
+.jdk-local/
+GEMINI.md
+gradlew
+gradlew.bat

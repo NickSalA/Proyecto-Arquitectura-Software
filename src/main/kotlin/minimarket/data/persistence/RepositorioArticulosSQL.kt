@@ -6,15 +6,17 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import org.springframework.stereotype.Repository
 
 /**
  * Repositorio JDBC para la tabla transaccional Articulos de MinimarketDB.
  *
- * En el Entregable 2 el cliente Swing ya no escribe archivos .dat. Cada
- * operacion CRUD abre una conexion contra SQL Server en el servidor MATHIPC,
+ * En el Entregable 3 la aplicacion Web MVC ya no escribe archivos .dat. Cada
+ * operacion CRUD abre una conexion contra SQL Server,
  * ejecuta una sentencia parametrizada y libera explicitamente ResultSet,
  * PreparedStatement y Connection dentro del bloque finally.
  */
+@Repository
 class RepositorioArticulosSQL {
 
     private val connectionUrl = AppConfig.JDBC_URL

@@ -24,28 +24,6 @@ fun main() {
     println()
 
     println("Construyendo consulta PIVOT dinamica...")
-    val columnasPivot = fechas.joinToString(", ") { "[$it]" }
-    val pivotQuery = """
-        IF EXISTS (SELECT * FROM sys.views WHERE name = 'Vista_Stock_Cruzado')
-            DROP VIEW Vista_Stock_Cruzado;
-        EXEC('
-        CREATE VIEW Vista_Stock_Cruzado AS
-        SELECT
-            da.ArticuloID AS [ID],
-            da.Descripcion AS [Articulo],
-            $columnasPivot
-        FROM
-            Fact_Inventario fi
-            INNER JOIN Dim_Articulo da ON fi.ArticuloKey = da.ArticuloKey
-            INNER JOIN Dim_Tiempo dt ON fi.TiempoKey = dt.TiempoKey
-        GROUP BY
-            da.ArticuloID, da.Descripcion
-        PIVOT (
-            SUM(fi.Stock)
-            FOR dt.Fecha IN ($columnasPivot)
-        ) AS pvt
-        ');
-    """.trimIndent()
     println()
 
     println("Ejecutando creacion de vista en MinimarketDW...")

@@ -1,7 +1,7 @@
 -- ============================================================
 -- Script DDL: MinimarketDW (Datawarehouse)
 -- Motor: Microsoft SQL Server
--- Sistema: MinimarketPOS - Entregable 2
+-- Sistema: MinimarketPOS - Entregable 3
 -- Modelo: Estrella (Star Schema)
 -- ============================================================
 
@@ -31,8 +31,11 @@ BEGIN
 END
 GO
 
-CREATE UNIQUE INDEX IX_Dim_Articulo_ArticuloID
-ON Dim_Articulo(ArticuloID);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Dim_Articulo_ArticuloID')
+BEGIN
+    CREATE UNIQUE INDEX IX_Dim_Articulo_ArticuloID
+    ON Dim_Articulo(ArticuloID);
+END
 GO
 
 -- ============================================================
@@ -52,8 +55,11 @@ BEGIN
 END
 GO
 
-CREATE UNIQUE INDEX IX_Dim_Tiempo_Fecha
-ON Dim_Tiempo(Fecha);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Dim_Tiempo_Fecha')
+BEGIN
+    CREATE UNIQUE INDEX IX_Dim_Tiempo_Fecha
+    ON Dim_Tiempo(Fecha);
+END
 GO
 
 -- ============================================================
@@ -77,8 +83,11 @@ BEGIN
 END
 GO
 
-CREATE UNIQUE INDEX IX_Fact_Inventario_Tiempo_Articulo
-ON Fact_Inventario(TiempoKey, ArticuloKey);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Fact_Inventario_Tiempo_Articulo')
+BEGIN
+    CREATE UNIQUE INDEX IX_Fact_Inventario_Tiempo_Articulo
+    ON Fact_Inventario(TiempoKey, ArticuloKey);
+END
 GO
 
 PRINT 'MinimarketDW creado exitosamente.';
