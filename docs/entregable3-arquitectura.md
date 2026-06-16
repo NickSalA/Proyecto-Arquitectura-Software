@@ -49,7 +49,7 @@ Los usuarios principales son operadores de inventario, administradores del minim
 | Framework MVC | Spring Boot MVC |
 | Vista | Thymeleaf, HTML, CSS |
 | Base de datos | Microsoft SQL Server 2022 |
-| Acceso a datos | JDBC |
+| Acceso a datos | JDBC con procedimientos almacenados |
 | FTP | Apache Commons Net + vsftpd Docker |
 | Contenedores | Docker Compose |
 | DataWarehouse | Modelo estrella en SQL Server |
@@ -70,7 +70,7 @@ Los usuarios principales son operadores de inventario, administradores del minim
 | Atributo | Implementacion |
 |----------|----------------|
 | Disponibilidad | Servicios Docker independientes para SQL Server y FTP |
-| Seguridad | Sentencias parametrizadas JDBC y credenciales por variables de entorno |
+| Seguridad | Procedimientos almacenados invocados por JDBC y credenciales por variables de entorno |
 | Rendimiento | Indices en tablas operacionales, Mirror y DataWarehouse |
 | Robustez | ETL y Mirror con control transaccional |
 | Escalabilidad | Separacion por capas y servicios ejecutables independientes |
@@ -85,10 +85,10 @@ Los usuarios principales son operadores de inventario, administradores del minim
 
 ### 6.1 Descripcion de la Arquitectura
 
-La solucion implementa arquitectura Web MVC con N capas. La vista Thymeleaf recibe peticiones del navegador, el controlador MVC coordina la operacion, el servicio valida reglas de negocio, el repositorio ejecuta SQL parametrizado y la base operacional persiste los datos. Posteriormente, un proceso de exportacion publica la data en FTP, otro proceso actualiza Mirror y el ETL carga el DataWarehouse.
+La solucion implementa arquitectura Web MVC con N capas. La vista Thymeleaf recibe peticiones del navegador, el controlador MVC coordina la operacion, el servicio valida reglas de negocio, el repositorio invoca procedimientos almacenados mediante JDBC y la base operacional persiste los datos. Posteriormente, un proceso de exportacion publica la data en FTP, otro proceso actualiza Mirror y el ETL carga el DataWarehouse.
 
 ```text
-Vista Web -> Controller -> Service -> Repository -> MinimarketDB
+Vista Web -> Controller -> Service -> Repository -> Stored Procedures -> MinimarketDB
 MinimarketDB -> ExportarFTP -> FTP Docker -> ActualizarMirror -> MinimarketMirror
 MinimarketMirror -> GenerarDatawareHouse -> MinimarketDW -> OLAP
 ```
@@ -104,7 +104,7 @@ Kotlin JVM, Spring Boot MVC, Thymeleaf, SQL Server, JDBC, Apache Commons Net, Do
 | Vista | `templates/articulos/index.html` | Interfaz de usuario web |
 | Controlador | `minimarket.web` | Recibe solicitudes HTTP |
 | Servicio | `minimarket.service` | Valida reglas de negocio |
-| Datos | `minimarket.data.persistence` | Ejecuta operaciones JDBC |
+| Datos | `minimarket.data.persistence` | Ejecuta procedimientos almacenados mediante JDBC |
 | FTP | `minimarket.ftp` | Publica CSV en servidor FTP |
 | Mirror | `minimarket.mirror` | Sincroniza replica desde FTP |
 | ETL | `minimarket.etl` | Carga DataWarehouse |
@@ -112,7 +112,7 @@ Kotlin JVM, Spring Boot MVC, Thymeleaf, SQL Server, JDBC, Apache Commons Net, Do
 
 ### 6.4 Capa de Datos
 
-La capa operacional usa `MinimarketDB.Articulos`. La capa Mirror usa `MinimarketMirror.ArticulosMirror` con columna `Activo` y `FechaSincronizacion`. La capa analitica usa `MinimarketDW` con `Dim_Articulo`, `Dim_Tiempo` y `Fact_Inventario`.
+La capa operacional usa `MinimarketDB.Articulos` y expone el mantenimiento mediante los procedimientos `dbo.sp_Articulo_Listar`, `dbo.sp_Articulo_Buscar`, `dbo.sp_Articulo_Insertar`, `dbo.sp_Articulo_Actualizar`, `dbo.sp_Articulo_Eliminar`, `dbo.sp_Articulo_Existe` y `dbo.sp_Articulo_Cantidad`. La capa Mirror usa `MinimarketMirror.ArticulosMirror` con columna `Activo` y `FechaSincronizacion`. La capa analitica usa `MinimarketDW` con `Dim_Articulo`, `Dim_Tiempo` y `Fact_Inventario`.
 
 ## 7. Vista de Desarrollo
 
@@ -133,7 +133,7 @@ Spring Boot MVC para la aplicacion web.
 
 ### 7.4 Convenciones de Desarrollo
 
-Los paquetes separan responsabilidades por capa. Las operaciones SQL usan `PreparedStatement`. Los procesos de integracion se ejecutan como tareas Gradle independientes.
+Los paquetes separan responsabilidades por capa. Las operaciones CRUD usan `CallableStatement` para llamar procedimientos almacenados. Los procesos de integracion se ejecutan como tareas Gradle independientes.
 
 ## 8. Capa de Despliegue
 

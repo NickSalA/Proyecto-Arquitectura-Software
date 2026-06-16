@@ -32,7 +32,7 @@ Cliente Web
 | Vistas | `src/main/resources/templates` | Interfaz HTML Thymeleaf |
 | Estilos | `src/main/resources/static/css` | Presentacion de la aplicacion web |
 | Service | `src/main/kotlin/minimarket/service` | Validaciones y reglas de negocio |
-| Repository | `src/main/kotlin/minimarket/data/persistence` | Acceso JDBC a SQL Server |
+| Repository | `src/main/kotlin/minimarket/data/persistence` | Llamadas JDBC a procedimientos almacenados SQL Server |
 | FTP | `src/main/kotlin/minimarket/ftp/ExportarFTP.kt` | Exporta datos a `articulos.csv` en FTP |
 | Mirror | `src/main/kotlin/minimarket/mirror/ActualizarMirror.kt` | Descarga CSV y sincroniza `MinimarketMirror` |
 | ETL | `src/main/kotlin/minimarket/etl` | Carga `MinimarketDW` desde Mirror |
@@ -88,6 +88,18 @@ docker exec -it minimarket_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost 
 ```
 
 Si la imagen tiene `sqlcmd` en la ruta antigua, usar `/opt/mssql-tools/bin/sqlcmd`.
+
+El script `sql/create_database.sql` tambien crea los procedimientos almacenados usados por el CRUD:
+
+```text
+dbo.sp_Articulo_Listar
+dbo.sp_Articulo_Buscar
+dbo.sp_Articulo_Insertar
+dbo.sp_Articulo_Actualizar
+dbo.sp_Articulo_Eliminar
+dbo.sp_Articulo_Existe
+dbo.sp_Articulo_Cantidad
+```
 
 ### 3. Ejecutar aplicacion Web MVC
 
@@ -156,7 +168,7 @@ El ETL toma como origen los articulos activos de `MinimarketMirror`.
 
 | Script | Base | Uso |
 |--------|------|-----|
-| `sql/create_database.sql` | `MinimarketDB` | Base operacional |
+| `sql/create_database.sql` | `MinimarketDB` | Base operacional y procedimientos almacenados CRUD |
 | `sql/create_mirror.sql` | `MinimarketMirror` | Base espejo alimentada por FTP |
 | `sql/create_datawarehouse.sql` | `MinimarketDW` | Modelo estrella para analitica |
 
