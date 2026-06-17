@@ -16,3 +16,22 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+  init-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: minimarket_init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./sql:/sql
+    entrypoint:
+      - /opt/mssql-tools/bin/sqlcmd
+      - -S
+      - sqlserver
+      - -U
+      - sa
+      - -P
+      - DreamTeam_26
+      - -i
+      - /sql/create_database.sql

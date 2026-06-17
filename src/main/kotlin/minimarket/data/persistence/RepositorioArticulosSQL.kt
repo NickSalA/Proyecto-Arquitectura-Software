@@ -2,40 +2,31 @@ package minimarket.data.persistence
 
 import minimarket.application.AppConfig
 import minimarket.data.model.Articulo
+import java.sql.CallableStatement
 import java.sql.Connection
 import java.sql.DriverManager
-import java.sql.PreparedStatement
 import java.sql.ResultSet
 
 /**
  * Repositorio JDBC para la tabla transaccional Articulos de MinimarketDB.
  *
- * En el Entregable 2 el cliente Swing ya no escribe archivos .dat. Cada
- * operacion CRUD abre una conexion contra SQL Server en el servidor MATHIPC,
- * ejecuta una sentencia parametrizada y libera explicitamente ResultSet,
- * PreparedStatement y Connection dentro del bloque finally.
+ * En el Entregable 2 todas las operaciones CRUD se delegan a procedimientos
+ * almacenados en SQL Server. La capa de aplicacion solo invoca los SPs
+ * mediante CallableStatement; no existen sentencias DML escritas en Kotlin.
  */
 class RepositorioArticulosSQL {
 
     private val connectionUrl = AppConfig.JDBC_URL
 
     /**
-     * Inserta un articulo nuevo en la base transaccional.
-     *
-     * SQL ejecutado:
-     * INSERT INTO Articulos (ID, Descripcion, Precio, Stock) VALUES (?, ?, ?, ?)
-     *
-     * Los signos ? se completan con PreparedStatement para evitar concatenar
-     * datos de la interfaz y reducir riesgo de inyeccion SQL.
+     * Inserta un articulo nuevo via [sp_AgregarArticulo].
      */
     fun agregar(articulo: Articulo): Boolean {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement(
-                "INSERT INTO Articulos (ID, Descripcion, Precio, Stock) VALUES (?, ?, ?, ?)"
-            )
+            stmt = conn.prepareCall("{call sp_AgregarArticulo(?, ?, ?, ?)}")
             stmt.setInt(1, articulo.id)
             stmt.setString(2, articulo.descripcion)
             stmt.setDouble(3, articulo.precio)
@@ -52,18 +43,15 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Busca un articulo por su ID de negocio.
-     *
-     * El ResultSet se transforma manualmente al modelo Articulo usado por la
-     * capa de aplicacion. Si no existe una fila, se retorna null.
+     * Busca un articulo por ID via [sp_BuscarArticulo].
      */
     fun buscar(id: Int): Articulo? {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         var rs: ResultSet? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement("SELECT ID, Descripcion, Precio, Stock FROM Articulos WHERE ID = ?")
+            stmt = conn.prepareCall("{call sp_BuscarArticulo(?)}")
             stmt.setInt(1, id)
             rs = stmt.executeQuery()
             if (rs.next()) {
@@ -86,19 +74,16 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Lista todos los articulos activos registrados en SQL Server.
-     *
-     * La consulta usa ORDER BY ID para que la tabla Swing muestre un resultado
-     * estable entre recargas y no dependa del orden fisico de almacenamiento.
+     * Lista todos los articulos via [sp_ListarArticulos].
      */
     fun listar(): List<Articulo> {
         val articulos = mutableListOf<Articulo>()
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         var rs: ResultSet? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement("SELECT ID, Descripcion, Precio, Stock FROM Articulos ORDER BY ID")
+            stmt = conn.prepareCall("{call sp_ListarArticulos}")
             rs = stmt.executeQuery()
             while (rs.next()) {
                 articulos.add(
@@ -121,23 +106,18 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Actualiza los campos editables de un articulo existente.
-     *
-     * El ID no se modifica porque actua como clave primaria de la tabla. El
-     * valor retornado depende de las filas afectadas por SQL Server.
+     * Actualiza los campos de un articulo via [sp_ActualizarArticulo].
      */
     fun actualizar(articulo: Articulo): Boolean {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement(
-                "UPDATE Articulos SET Descripcion = ?, Precio = ?, Stock = ? WHERE ID = ?"
-            )
-            stmt.setString(1, articulo.descripcion)
-            stmt.setDouble(2, articulo.precio)
-            stmt.setInt(3, articulo.stock)
-            stmt.setInt(4, articulo.id)
+            stmt = conn.prepareCall("{call sp_ActualizarArticulo(?, ?, ?, ?)}")
+            stmt.setInt(1, articulo.id)
+            stmt.setString(2, articulo.descripcion)
+            stmt.setDouble(3, articulo.precio)
+            stmt.setInt(4, articulo.stock)
             val filas = stmt.executeUpdate()
             return filas > 0
         } catch (e: Exception) {
@@ -150,17 +130,14 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Elimina una fila de Articulos por ID.
-     *
-     * En esta arquitectura cliente/servidor la operacion ocurre directamente
-     * en SQL Server; ya no existe una marca diferida en archivos locales .dat.
+     * Elimina un articulo por ID via [sp_EliminarArticulo].
      */
     fun eliminar(id: Int): Boolean {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement("DELETE FROM Articulos WHERE ID = ?")
+            stmt = conn.prepareCall("{call sp_EliminarArticulo(?)}")
             stmt.setInt(1, id)
             val filas = stmt.executeUpdate()
             return filas > 0
@@ -174,22 +151,19 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Verifica existencia antes de registrar o actualizar desde la interfaz.
-     *
-     * SELECT COUNT(*) permite responder con un booleano simple sin transferir
-     * columnas innecesarias desde el servidor de base de datos.
+     * Verifica existencia de un articulo via [sp_ExisteArticulo].
      */
     fun existe(id: Int): Boolean {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         var rs: ResultSet? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM Articulos WHERE ID = ?")
+            stmt = conn.prepareCall("{call sp_ExisteArticulo(?)}")
             stmt.setInt(1, id)
             rs = stmt.executeQuery()
             rs.next()
-            return rs.getInt(1) > 0
+            return rs.getInt("Cantidad") > 0
         } catch (e: Exception) {
             println("Error al verificar existencia: ${e.message}")
             return false
@@ -201,18 +175,18 @@ class RepositorioArticulosSQL {
     }
 
     /**
-     * Retorna la cantidad total de articulos en la tabla transaccional.
+     * Retorna la cantidad total de articulos via [sp_ContarArticulos].
      */
     fun cantidad(): Int {
         var conn: Connection? = null
-        var stmt: PreparedStatement? = null
+        var stmt: CallableStatement? = null
         var rs: ResultSet? = null
         try {
             conn = DriverManager.getConnection(connectionUrl)
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM Articulos")
+            stmt = conn.prepareCall("{call sp_ContarArticulos}")
             rs = stmt.executeQuery()
             rs.next()
-            return rs.getInt(1)
+            return rs.getInt("Cantidad")
         } catch (e: Exception) {
             println("Error al contar articulos: ${e.message}")
             return 0
