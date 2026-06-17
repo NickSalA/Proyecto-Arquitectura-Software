@@ -90,6 +90,185 @@ BEGIN
 END
 GO
 
+-- ============================================================
+-- Procedimientos almacenados para MinimarketDW
+-- ============================================================
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_LimpiarTablas
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM Fact_Inventario;
+    DELETE FROM Dim_Articulo;
+    DELETE FROM Dim_Tiempo;
+    DBCC CHECKIDENT('Dim_Articulo', RESEED, 0);
+    DBCC CHECKIDENT('Dim_Tiempo', RESEED, 0);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_InsertarDimTiempo
+    @Fecha DATE,
+    @Anio INT,
+    @Mes INT,
+    @Dia INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO Dim_Tiempo (Fecha, Anio, Mes, Dia)
+    OUTPUT inserted.TiempoKey
+    VALUES (@Fecha, @Anio, @Mes, @Dia);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_InsertarDimArticulo
+    @ArticuloID INT,
+    @Descripcion VARCHAR(50),
+    @Precio DECIMAL(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO Dim_Articulo (ArticuloID, Descripcion, Precio)
+    OUTPUT inserted.ArticuloKey
+    VALUES (@ArticuloID, @Descripcion, @Precio);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_InsertarFact
+    @TiempoKey INT,
+    @ArticuloKey INT,
+    @Stock INT,
+    @PrecioActual DECIMAL(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO Fact_Inventario (TiempoKey, ArticuloKey, Stock, PrecioActual)
+    VALUES (@TiempoKey, @ArticuloKey, @Stock, @PrecioActual);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_ObtenerFechas
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT CONVERT(VARCHAR, Fecha, 23) AS FechaStr
+    FROM Dim_Tiempo
+    ORDER BY Fecha;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_ObtenerDimTiempoPorFecha
+    @Fecha DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TiempoKey FROM Dim_Tiempo WHERE Fecha = @Fecha;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_MergeDimTiempo
+    @Fecha DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TiempoKey INT;
+    SELECT @TiempoKey = TiempoKey FROM Dim_Tiempo WHERE Fecha = @Fecha;
+    IF @TiempoKey IS NOT NULL
+    BEGIN
+        SELECT @TiempoKey AS TiempoKey;
+        RETURN;
+    END
+    INSERT INTO Dim_Tiempo (Fecha, Anio, Mes, Dia)
+    OUTPUT inserted.TiempoKey
+    VALUES (@Fecha, YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha));
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_MergeDimArticulo
+    @ArticuloID INT,
+    @Descripcion VARCHAR(50),
+    @Precio DECIMAL(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    MERGE Dim_Articulo AS destino
+    USING (VALUES (@ArticuloID, @Descripcion, @Precio)) AS origen (ArticuloID, Descripcion, Precio)
+        ON destino.ArticuloID = origen.ArticuloID
+    WHEN MATCHED THEN
+        UPDATE SET Descripcion = origen.Descripcion, Precio = origen.Precio
+    WHEN NOT MATCHED THEN
+        INSERT (ArticuloID, Descripcion, Precio)
+        VALUES (origen.ArticuloID, origen.Descripcion, origen.Precio)
+    OUTPUT $action AS Accion, inserted.ArticuloKey;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_MergeFactInventario
+    @TiempoKey INT,
+    @ArticuloKey INT,
+    @Stock INT,
+    @PrecioActual DECIMAL(10,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    MERGE Fact_Inventario AS destino
+    USING (VALUES (@TiempoKey, @ArticuloKey, @Stock, @PrecioActual)) AS origen (TiempoKey, ArticuloKey, Stock, PrecioActual)
+        ON destino.TiempoKey = origen.TiempoKey AND destino.ArticuloKey = origen.ArticuloKey
+    WHEN MATCHED THEN
+        UPDATE SET Stock = origen.Stock, PrecioActual = origen.PrecioActual
+    WHEN NOT MATCHED THEN
+        INSERT (TiempoKey, ArticuloKey, Stock, PrecioActual)
+        VALUES (origen.TiempoKey, origen.ArticuloKey, origen.Stock, origen.PrecioActual)
+    OUTPUT $action AS Accion;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_CrearVistaCrossTab
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @pivotCols NVARCHAR(MAX);
+    DECLARE @sql NVARCHAR(MAX);
+    SELECT @pivotCols = STRING_AGG(QUOTENAME(CONVERT(VARCHAR, Fecha, 23)), ', ')
+    FROM Dim_Tiempo;
+    IF @pivotCols IS NULL
+    BEGIN
+        PRINT 'No hay fechas en Dim_Tiempo. No se puede crear la vista.';
+        RETURN;
+    END
+    DROP VIEW IF EXISTS Vista_Stock_Cruzado;
+    SET @sql = '
+    CREATE VIEW Vista_Stock_Cruzado AS
+    SELECT
+        ArticuloID AS ID,
+        Descripcion AS Articulo,
+        ' + @pivotCols + '
+    FROM (
+        SELECT
+            da.ArticuloID,
+            da.Descripcion,
+            dt.Fecha,
+            fi.Stock
+        FROM Fact_Inventario fi
+        INNER JOIN Dim_Articulo da ON fi.ArticuloKey = da.ArticuloKey
+        INNER JOIN Dim_Tiempo dt ON fi.TiempoKey = dt.TiempoKey
+    ) AS SourceTable
+    PIVOT (
+        SUM(Stock)
+        FOR Fecha IN (' + @pivotCols + ')
+    ) AS PivotTable';
+    EXEC sp_executesql @sql;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_DW_ConsultarVistaCrossTab
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT * FROM Vista_Stock_Cruzado ORDER BY ID;
+END
+GO
+
 PRINT 'MinimarketDW creado exitosamente.';
 PRINT 'Star Schema listo: Dim_Articulo, Dim_Tiempo, Fact_Inventario.';
+PRINT 'Procedimientos almacenados listos.';
 GO

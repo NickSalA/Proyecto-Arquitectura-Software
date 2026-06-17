@@ -34,6 +34,38 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE dbo.sp_Mirror_LimpiarTablas
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM ArticulosMirror;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Mirror_Insertar
+    @ID INT,
+    @Descripcion VARCHAR(50),
+    @Precio DECIMAL(10,2),
+    @Stock INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO ArticulosMirror (ID, Descripcion, Precio, Stock, Activo)
+    VALUES (@ID, @Descripcion, @Precio, @Stock, 1);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Mirror_ExtraerActivos
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ID, Descripcion, Precio, Stock
+    FROM ArticulosMirror
+    WHERE Activo = 1
+    ORDER BY ID;
+END
+GO
+
 PRINT 'MinimarketMirror creado exitosamente.';
 PRINT 'Tabla ArticulosMirror lista para sincronizacion FTP.';
 GO

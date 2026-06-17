@@ -132,6 +132,14 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE dbo.sp_Articulo_LimpiarTablas
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM Articulos;
+END
+GO
+
 PRINT 'Base de datos MinimarketDB creada exitosamente.';
 PRINT 'Tabla Articulos y procedimientos almacenados listos para recibir datos.';
 GO
