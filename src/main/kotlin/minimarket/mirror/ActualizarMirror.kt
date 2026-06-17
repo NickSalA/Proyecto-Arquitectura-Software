@@ -1,6 +1,6 @@
 package minimarket.mirror
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import minimarket.data.model.Articulo
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
@@ -92,6 +92,10 @@ private fun parseArticulo(line: String): Articulo? {
     return Articulo(id, descripcion, precio, stock)
 }
 
+/**
+ * Parsea una linea de CSV manualmente.
+ * Soporta campos entre comillas y comillas escapadas ("").
+ */
 private fun parseCsvLine(line: String): List<String> {
     val values = mutableListOf<String>()
     val current = StringBuilder()

@@ -1,6 +1,6 @@
-package minimarket.olap
+package minimarket.dw
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -52,28 +52,29 @@ fun main() {
             """.trimIndent()
             stmt.executeUpdate(createSQL)
         } else {
-            val columnasPivot = fechas.joinToString(", ") { "SUM(fi.Stock) AS [$it]" }
-            val columnasGroup = "da.ArticuloID, da.Descripcion"
             val pivotCols = fechas.joinToString(", ") { "[$it]" }
 
+            stmt.executeUpdate("DROP VIEW IF EXISTS Vista_Stock_Cruzado")
             val createSQL = """
-                EXEC('
                 CREATE VIEW Vista_Stock_Cruzado AS
                 SELECT
-                    da.ArticuloID AS ID,
-                    da.Descripcion AS Articulo,
-                    $columnasPivot
-                FROM
-                    Fact_Inventario fi
+                    ArticuloID AS ID,
+                    Descripcion AS Articulo,
+                    $pivotCols
+                FROM (
+                    SELECT
+                        da.ArticuloID,
+                        da.Descripcion,
+                        dt.Fecha,
+                        fi.Stock
+                    FROM Fact_Inventario fi
                     INNER JOIN Dim_Articulo da ON fi.ArticuloKey = da.ArticuloKey
                     INNER JOIN Dim_Tiempo dt ON fi.TiempoKey = dt.TiempoKey
-                GROUP BY
-                    $columnasGroup
+                ) AS SourceTable
                 PIVOT (
-                    SUM(fi.Stock)
-                    FOR dt.Fecha IN ($pivotCols)
-                ) AS pvt
-                '')
+                    SUM(Stock)
+                    FOR Fecha IN ($pivotCols)
+                ) AS PivotTable
             """.trimIndent()
             stmt.executeUpdate(createSQL)
         }

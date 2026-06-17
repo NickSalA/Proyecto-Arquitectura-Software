@@ -1,7 +1,7 @@
-package minimarket.web
+package minimarket.web.controller
 
-import minimarket.application.AppConfig
-import minimarket.data.model.Articulo
+import minimarket.config.AppConfig
+import minimarket.data.model.ArticuloForm
 import minimarket.service.ArticuloService
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -11,12 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
-
-@Controller
-class HomeController {
-    @GetMapping("/")
-    fun home(): String = "redirect:/articulos"
-}
 
 @Controller
 @RequestMapping("/articulos")
@@ -88,19 +82,5 @@ class ArticuloController(
         model.addAttribute("editId", editId)
         model.addAttribute("dbDisplay", AppConfig.DB_DISPLAY)
         model.addAttribute("ftpDisplay", "${AppConfig.FTP_HOST}:${AppConfig.FTP_PORT}")
-    }
-}
-
-data class ArticuloForm(
-    var id: Int? = null,
-    var descripcion: String = "",
-    var precio: Double? = null,
-    var stock: Int? = null
-) {
-    fun toArticulo(forcedId: Int? = null): Articulo? {
-        val safeId = forcedId ?: id ?: return null
-        val safePrecio = precio ?: return null
-        val safeStock = stock ?: return null
-        return Articulo(safeId, descripcion.trim(), safePrecio, safeStock)
     }
 }

@@ -1,8 +1,8 @@
 package minimarket.ftp
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import minimarket.data.model.Articulo
-import minimarket.data.persistence.RepositorioArticulosSQL
+import minimarket.data.repository.RepositorioArticulosSQL
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply

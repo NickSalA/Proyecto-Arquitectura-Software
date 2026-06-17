@@ -1,6 +1,6 @@
-package minimarket.etl
+package minimarket.dw
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import minimarket.data.model.Articulo
 import java.sql.Connection
 import java.sql.Date
@@ -8,19 +8,6 @@ import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
-/**
- * Proceso ETL del Entregable 3.
- *
- * Flujo general:
- * 1. Extrae articulos activos desde MinimarketMirror, alimentado por el archivo recibido via FTP.
- * 2. Crea o recupera la fecha actual en Dim_Tiempo del Datawarehouse.
- * 3. Sincroniza Dim_Articulo usando MERGE, equivalente a un UPSERT en SQL Server.
- * 4. Carga Fact_Inventario usando MERGE para insertar o actualizar el stock del dia.
- *
- * La regla de infraestructura del curso exige manejo imperativo de JDBC: cada funcion abre
- * Connection, PreparedStatement y ResultSet en variables anulables, ejecuta su bloque try y
- * cierra explicitamente los recursos en finally con ?.close(), sin cierre automatico por extension.
- */
 fun main() {
     println("╔══════════════════════════════════════════════════╗")
     println("║       MINIMARKET POS - GenerarDatawarehouse      ║")
@@ -71,13 +58,6 @@ fun main() {
     println("═════════════════════════════════════════════")
 }
 
-/**
- * Fase Extract.
- *
- * Lee la tabla ArticulosMirror desde MinimarketMirror mediante JDBC. Esta consulta es la frontera
- * entre la capa Mirror y el proceso analitico; por eso solo se extraen articulos activos y las
- * columnas necesarias para dimensiones y hechos: ID, Descripcion, Precio y Stock.
- */
 private fun extraerArticulos(): List<Articulo> {
     val articulos = mutableListOf<Articulo>()
     var conn: Connection? = null
@@ -109,13 +89,6 @@ private fun extraerArticulos(): List<Articulo> {
     return articulos
 }
 
-/**
- * Fase Transform para la dimension de tiempo.
- *
- * El Datawarehouse debe tener una sola fila por fecha. Primero se consulta Dim_Tiempo por la
- * fecha actual; si ya existe se reutiliza su clave subrogada TiempoKey. Si no existe, se inserta
- * la fecha descompuesta en Anio, Mes y Dia, y se recupera la clave generada con OUTPUT inserted.
- */
 private fun insertarFechaActual(): Int {
     val hoy = java.time.LocalDate.now()
     val fechaSql = Date.valueOf(hoy)
@@ -162,15 +135,6 @@ private fun insertarFechaActual(): Int {
     }
 }
 
-/**
- * Fase Transform/Load de Dim_Articulo.
- *
- * MERGE funciona como UPSERT:
- * - WHEN MATCHED actualiza Descripcion y Precio si el ArticuloID ya existe.
- * - WHEN NOT MATCHED inserta una nueva dimension con el ArticuloID de negocio.
- * - OUTPUT devuelve la accion aplicada y la clave subrogada ArticuloKey, que luego se usa
- *   para relacionar la tabla de hechos Fact_Inventario.
- */
 private fun sincronizarDimArticulo(articulos: List<Articulo>): List<Int> {
     val keys = mutableListOf<Int>()
     var conn: Connection? = null
@@ -220,14 +184,6 @@ private fun sincronizarDimArticulo(articulos: List<Articulo>): List<Int> {
     return keys
 }
 
-/**
- * Fase Load de la tabla de hechos.
- *
- * Fact_Inventario registra las metricas de inventario por fecha y articulo. El MERGE evita
- * duplicar filas para la misma combinacion TiempoKey + ArticuloKey:
- * - Si la fila existe, actualiza Stock y PrecioActual con los valores actuales del origen.
- * - Si la fila no existe, inserta la medicion del dia.
- */
 private fun cargarFactInventario(tiempoKey: Int, articuloKeys: List<Int>, articulos: List<Articulo>): Int {
     var insertados = 0
     var conn: Connection? = null
@@ -283,13 +239,10 @@ private fun cargarFactInventario(tiempoKey: Int, articuloKeys: List<Int>, articu
     return insertados
 }
 
-/**
- * Convierte la accion textual de SQL Server MERGE en una etiqueta legible para consola.
- */
 private fun formatearAccionMerge(accion: String): String {
     return when (accion) {
-        "INSERT" -> "✚ INSERT"
-        "UPDATE" -> "↻ UPDATE"
+        "INSERT" -> "\u271A INSERT"
+        "UPDATE" -> "\u21BB UPDATE"
         else -> accion
     }
 }

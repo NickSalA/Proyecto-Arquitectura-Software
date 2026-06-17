@@ -1,7 +1,8 @@
-package minimarket.application
+package minimarket.client
 
+import minimarket.config.AppConfig
 import minimarket.data.model.Articulo
-import minimarket.data.persistence.RepositorioArticulosSQL
+import minimarket.data.repository.RepositorioArticulosSQL
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -40,7 +41,7 @@ fun main() {
     }
 }
 
-private class InventoryWindow : JFrame("MinimarketPOS - Inventario Local") {
+private class InventoryWindow : JFrame() {
     private val repository = RepositorioArticulosSQL()
 
     private val idField = JTextField()

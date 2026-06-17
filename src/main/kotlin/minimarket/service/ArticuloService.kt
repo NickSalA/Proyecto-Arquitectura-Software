@@ -1,7 +1,7 @@
 package minimarket.service
 
 import minimarket.data.model.Articulo
-import minimarket.data.persistence.RepositorioArticulosSQL
+import minimarket.data.repository.RepositorioArticulosSQL
 import org.springframework.stereotype.Service
 
 @Service
@@ -56,8 +56,3 @@ class ArticuloService(
         return null
     }
 }
-
-data class ResultadoOperacion(
-    val exitoso: Boolean,
-    val mensaje: String
-)

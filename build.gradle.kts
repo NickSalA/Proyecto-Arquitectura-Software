@@ -26,7 +26,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("minimarket.application.MainKt")
+    mainClass.set("minimarket.client.MainKt")
 }
 
 springBoot {
@@ -51,7 +51,7 @@ tasks.register<JavaExec>("runWeb") {
 tasks.register<JavaExec>("runMain") {
     group = "application"
     description = "Ejecuta la interfaz gráfica principal de gestión de inventario"
-    mainClass.set("minimarket.application.MainKt")
+    mainClass.set("minimarket.client.MainKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
     environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
@@ -63,7 +63,7 @@ tasks.register<JavaExec>("runMain") {
 tasks.register<JavaExec>("runGenerarDatawareHouse") {
     group = "application"
     description = "Ejecuta el proceso ETL para generar el DataWarehouse"
-    mainClass.set("minimarket.etl.GenerarDatawareHouseKt")
+    mainClass.set("minimarket.dw.GenerarDatawareHouseKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
     environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
@@ -106,10 +106,22 @@ tasks.register<JavaExec>("runActualizarMirror") {
     environment("FTP_REMOTE_FILE", System.getenv("FTP_REMOTE_FILE") ?: "/articulos.csv")
 }
 
+tasks.register<JavaExec>("runCargarDatosReales") {
+    group = "application"
+    description = "Limpia y carga datos reales de minimarket en todas las bases"
+    mainClass.set("minimarket.dw.CargarDatosRealesKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    standardInput = System.`in`
+    environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
+    environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
+    environment("DB_USER", System.getenv("DB_USER") ?: "sa")
+    environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
+}
+
 tasks.register<JavaExec>("runCreateCrossTab") {
     group = "application"
     description = "Ejecuta la creación de la vista OLAP (CrossTab)"
-    mainClass.set("minimarket.olap.CreateCrossTabKt")
+    mainClass.set("minimarket.dw.CreateCrossTabKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
     environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")
@@ -121,7 +133,7 @@ tasks.register<JavaExec>("runCreateCrossTab") {
 tasks.register<JavaExec>("runViewCrossTab") {
     group = "application"
     description = "Ejecuta la visualización del cubo OLAP"
-    mainClass.set("minimarket.olap.ViewCrossTabKt")
+    mainClass.set("minimarket.dw.ViewCrossTabKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
     environment("DB_HOST", System.getenv("DB_HOST") ?: "localhost")

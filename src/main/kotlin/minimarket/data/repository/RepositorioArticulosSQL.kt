@@ -1,6 +1,6 @@
-package minimarket.data.persistence
+package minimarket.data.repository
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import minimarket.data.model.Articulo
 import java.sql.CallableStatement
 import java.sql.Connection
@@ -8,23 +8,11 @@ import java.sql.DriverManager
 import java.sql.ResultSet
 import org.springframework.stereotype.Repository
 
-/**
- * Repositorio JDBC para la tabla transaccional Articulos de MinimarketDB.
- *
- * En el Entregable 3 la aplicacion Web MVC delega el CRUD a procedimientos
- * almacenados en SQL Server. El repositorio solo prepara llamadas JDBC y libera
- * explicitamente ResultSet, CallableStatement y Connection dentro de finally.
- */
 @Repository
 class RepositorioArticulosSQL {
 
     private val connectionUrl = AppConfig.JDBC_URL
 
-    /**
-     * Inserta un articulo nuevo en la base transaccional.
-     *
-     * Procedimiento ejecutado: dbo.sp_Articulo_Insertar.
-     */
     fun agregar(articulo: Articulo): Boolean {
         var conn: Connection? = null
         var stmt: CallableStatement? = null
@@ -46,12 +34,6 @@ class RepositorioArticulosSQL {
         }
     }
 
-    /**
-     * Busca un articulo por su ID de negocio.
-     *
-     * El ResultSet se transforma manualmente al modelo Articulo usado por la
-     * capa de aplicacion. Si no existe una fila, se retorna null.
-     */
     fun buscar(id: Int): Articulo? {
         var conn: Connection? = null
         var stmt: CallableStatement? = null
@@ -80,11 +62,6 @@ class RepositorioArticulosSQL {
         }
     }
 
-    /**
-     * Lista todos los articulos activos registrados en SQL Server.
-     *
-     * El procedimiento devuelve un resultado estable ordenado por ID.
-     */
     fun listar(): List<Articulo> {
         val articulos = mutableListOf<Articulo>()
         var conn: Connection? = null
@@ -114,12 +91,6 @@ class RepositorioArticulosSQL {
         return articulos
     }
 
-    /**
-     * Actualiza los campos editables de un articulo existente.
-     *
-     * El ID no se modifica porque actua como clave primaria de la tabla. El
-     * valor retornado depende de las filas afectadas por SQL Server.
-     */
     fun actualizar(articulo: Articulo): Boolean {
         var conn: Connection? = null
         var stmt: CallableStatement? = null
@@ -143,12 +114,6 @@ class RepositorioArticulosSQL {
         }
     }
 
-    /**
-     * Elimina una fila de Articulos por ID.
-     *
-     * En esta arquitectura cliente/servidor la operacion ocurre directamente
-     * en SQL Server; ya no existe una marca diferida en archivos locales .dat.
-     */
     fun eliminar(id: Int): Boolean {
         var conn: Connection? = null
         var stmt: CallableStatement? = null
@@ -169,12 +134,6 @@ class RepositorioArticulosSQL {
         }
     }
 
-    /**
-     * Verifica existencia antes de registrar o actualizar desde la interfaz.
-     *
-     * El procedimiento devuelve un conteo simple sin transferir columnas
-     * innecesarias desde el servidor de base de datos.
-     */
     fun existe(id: Int): Boolean {
         var conn: Connection? = null
         var stmt: CallableStatement? = null
@@ -196,9 +155,6 @@ class RepositorioArticulosSQL {
         }
     }
 
-    /**
-     * Retorna la cantidad total de articulos en la tabla transaccional.
-     */
     fun cantidad(): Int {
         var conn: Connection? = null
         var stmt: CallableStatement? = null

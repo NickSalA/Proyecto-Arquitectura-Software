@@ -1,6 +1,6 @@
-package minimarket.olap
+package minimarket.dw
 
-import minimarket.application.AppConfig
+import minimarket.config.AppConfig
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -54,20 +54,20 @@ fun main() {
             maxOf(headerLen, dataLen)
         }
 
-        val separator = "┌" + colWidths.map { "─".repeat(it + 2) }.joinToString("┬") + "┐"
-        val headerRow = "│" + headers.mapIndexed { i, h -> " ${h.padEnd(colWidths[i])} " }.joinToString("│") + "│"
-        val headerSeparator = "├" + colWidths.map { "─".repeat(it + 2) }.joinToString("┼") + "┤"
+        val separator = "\u250C" + colWidths.map { "\u2500".repeat(it + 2) }.joinToString("\u252C") + "\u2510"
+        val headerRow = "\u2502" + headers.mapIndexed { i, h -> " ${h.padEnd(colWidths[i])} " }.joinToString("\u2502") + "\u2502"
+        val headerSeparator = "\u251C" + colWidths.map { "\u2500".repeat(it + 2) }.joinToString("\u253C") + "\u2524"
 
         println(separator)
         println(headerRow)
         println(headerSeparator)
 
         for (row in rows) {
-            val dataRow = "│" + row.mapIndexed { i, v -> " ${(v ?: "-").padEnd(colWidths[i])} " }.joinToString("│") + "│"
+            val dataRow = "\u2502" + row.mapIndexed { i, v -> " ${(v ?: "-").padEnd(colWidths[i])} " }.joinToString("\u2502") + "\u2502"
             println(dataRow)
         }
 
-        val bottomSeparator = "└" + colWidths.map { "─".repeat(it + 2) }.joinToString("┴") + "┘"
+        val bottomSeparator = "\u2514" + colWidths.map { "\u2500".repeat(it + 2) }.joinToString("\u2534") + "\u2518"
         println(bottomSeparator)
 
         println()

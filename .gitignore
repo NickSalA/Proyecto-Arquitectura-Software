@@ -38,6 +38,9 @@ shared/
 # FTP runtime volume
 /ftp/
 
+# Configuracion local con datos sensibles
+/config.properties
+
 # JDBC driver
 lib/
 
