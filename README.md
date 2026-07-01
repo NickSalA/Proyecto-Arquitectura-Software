@@ -1,16 +1,17 @@
-# MinimarketPOS - Entregable 3
+# MinimarketPOS - Entregable 4
 
-> Modelo de Arquitectura MVC con N Capas: Aplicacion, Datos, FTP, Mirror y DataWarehouse.
+> Modelo de Arquitectura MVC con N Capas: Aplicacion, Datos, FTP, Mirror, DataWarehouse y plugin PDF independiente.
 
 ## Descripcion
 
-MinimarketPOS es un sistema de gestion de inventario para una cadena de minimarkets. En este entregable la aplicacion se expone como una solucion Web MVC, mantiene sus datos operacionales en SQL Server, publica una copia por FTP, sincroniza una base Mirror y alimenta un DataWarehouse para consultas OLAP.
+MinimarketPOS es un sistema de gestion de inventario para una cadena de minimarkets. En este entregable la aplicacion se expone como una solucion Web MVC, mantiene sus datos operacionales en SQL Server, publica una copia por FTP, sincroniza una base Mirror, alimenta un DataWarehouse para consultas OLAP e incorpora un plugin frontend independiente para exportar la tabla de inventario a PDF.
 
 ## Arquitectura
 
 ```text
 Cliente Web
    -> Vista Thymeleaf / HTML / CSS
+   -> Plugin PDF de tabla (JS independiente)
    -> Controller MVC
    -> Service
    -> Repository JDBC
@@ -31,6 +32,7 @@ Cliente Web
 | Web MVC | `src/main/kotlin/minimarket/web` | Controladores Spring MVC y arranque web |
 | Vistas | `src/main/resources/templates` | Interfaz HTML Thymeleaf |
 | Estilos | `src/main/resources/static/css` | Presentacion de la aplicacion web |
+| Plugin PDF | `src/main/resources/static/js/plugins/table-pdf-export-plugin.js` | Exporta tablas HTML a una vista imprimible para guardar como PDF |
 | Service | `src/main/kotlin/minimarket/service` | Validaciones y reglas de negocio |
 | Repository | `src/main/kotlin/minimarket/data/persistence` | Llamadas JDBC a procedimientos almacenados SQL Server |
 | FTP | `src/main/kotlin/minimarket/ftp/ExportarFTP.kt` | Exporta datos a `articulos.csv` en FTP |
@@ -119,6 +121,8 @@ Abrir:
 http://localhost:8080/articulos
 ```
 
+La vista de articulos incluye el boton `Exportar PDF`, conectado al plugin independiente `table-pdf-export-plugin.js`.
+
 ### 4. Exportar datos al FTP
 
 ```bash
@@ -178,4 +182,10 @@ El documento tecnico del Entregable 3 esta en:
 
 ```text
 docs/entregable3-arquitectura.md
+```
+
+El documento tecnico del Entregable 4 esta en:
+
+```text
+docs/entregable4-plugin-pdf.md
 ```

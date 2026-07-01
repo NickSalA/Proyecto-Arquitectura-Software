@@ -46,6 +46,11 @@ tasks.register<JavaExec>("runWeb") {
     environment("DB_PORT", System.getenv("DB_PORT") ?: "1433")
     environment("DB_USER", System.getenv("DB_USER") ?: "sa")
     environment("DB_PASSWORD", System.getenv("DB_PASSWORD") ?: "DreamTeam_26")
+    environment("FTP_HOST", System.getenv("FTP_HOST") ?: "localhost")
+    environment("FTP_PORT", System.getenv("FTP_PORT") ?: "21")
+    environment("FTP_USER", System.getenv("FTP_USER") ?: "minimarket")
+    environment("FTP_PASSWORD", System.getenv("FTP_PASSWORD") ?: "minimarket123")
+    environment("FTP_REMOTE_FILE", System.getenv("FTP_REMOTE_FILE") ?: "/articulos.csv")
 }
 
 tasks.register<JavaExec>("runMain") {

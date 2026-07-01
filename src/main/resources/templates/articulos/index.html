@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MinimarketPOS - Entregable 3</title>
+    <title>MinimarketPOS - Entregable 4</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -18,7 +18,7 @@
             </p>
         </div>
         <div class="status-card">
-            <span>Entregable 3</span>
+            <span>Entregable 4</span>
             <strong th:text="${dbDisplay}">localhost:1433</strong>
             <small>FTP: <span th:text="${ftpDisplay}">localhost:21</span></small>
         </div>
@@ -68,18 +68,27 @@
                     <p class="eyebrow">Datos operacionales</p>
                     <h2>Inventario activo</h2>
                 </div>
-                <span class="counter" th:text="${#lists.size(articulos)} + ' articulos'">0 articulos</span>
+                <div class="table-tools">
+                    <span class="counter" th:text="${#lists.size(articulos)} + ' articulos'">0 articulos</span>
+                    <button type="button"
+                            class="secondary export-button"
+                            data-pdf-export
+                            data-table-target="#inventory-table"
+                            data-document-title="Inventario activo - MinimarketPOS">
+                        Exportar PDF
+                    </button>
+                </div>
             </div>
 
             <div class="table-wrap">
-                <table>
+                <table id="inventory-table">
                     <thead>
                     <tr>
                         <th>ID</th>
                         <th>Descripcion</th>
                         <th>Precio</th>
                         <th>Stock</th>
-                        <th>Acciones</th>
+                        <th data-pdf-ignore>Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -91,7 +100,7 @@
                         <td th:text="${articulo.descripcion}">Arroz</td>
                         <td th:text="${#numbers.formatDecimal(articulo.precio, 1, 2)}">5.50</td>
                         <td th:text="${articulo.stock}">20</td>
-                        <td class="row-actions">
+                        <td class="row-actions" data-pdf-ignore>
                             <a th:href="@{/articulos/{id}/editar(id=${articulo.id})}" class="link-button">Editar</a>
                             <form method="post" th:action="@{/articulos/{id}/eliminar(id=${articulo.id})}">
                                 <button type="submit" class="danger">Eliminar</button>
@@ -116,5 +125,6 @@
         </div>
     </section>
 </main>
+<script th:src="@{/js/plugins/table-pdf-export-plugin.js}"></script>
 </body>
 </html>
