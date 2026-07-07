@@ -82,5 +82,8 @@ class ArticuloController(
         model.addAttribute("editId", editId)
         model.addAttribute("dbDisplay", AppConfig.DB_DISPLAY)
         model.addAttribute("ftpDisplay", "${AppConfig.FTP_HOST}:${AppConfig.FTP_PORT}")
+        model.addAttribute("saTimeout", AppConfig.SECURITY_INACTIVITY_TIMEOUT)
+        model.addAttribute("saWarning", AppConfig.SECURITY_WARNING_TIME)
+        model.addAttribute("saHeartbeat", AppConfig.SECURITY_HEARTBEAT_INTERVAL)
     }
 }

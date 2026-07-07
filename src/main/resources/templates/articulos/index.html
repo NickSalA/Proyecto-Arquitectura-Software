@@ -3,79 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MinimarketPOS - Entregable 4</title>
+    <title>MinimarketPOS - Inventario</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
-<main class="shell">
-    <section class="hero">
-        <div>
-            <p class="eyebrow">Arquitectura MVC con N Capas</p>
-            <h1>MinimarketPOS Web</h1>
-            <p class="hero-copy">
-                Aplicacion web MVC conectada a SQL Server, con transferencia FTP,
-                Mirror y DataWarehouse para explotacion OLAP.
-            </p>
-        </div>
-        <div class="status-card">
-            <span>Entregable 4</span>
-            <strong th:text="${dbDisplay}">localhost:1433</strong>
-            <small>FTP: <span th:text="${ftpDisplay}">localhost:21</span></small>
-        </div>
-    </section>
+<body data-security-activity
+      th:attr="data-sa-timeout=${saTimeout},
+               data-sa-warning=${saWarning},
+               data-sa-heartbeat=${saHeartbeat}">
 
-    <div th:if="${success}" class="alert success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert error" th:text="${error}"></div>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-store"></i>
+            <span class="brand-text">MinimarketPOS</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-boxes-stacked"></i>
+                <span>Inventario</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="status-dot"></div>
+            <span class="status-label">Conectado</span>
+        </div>
+    </aside>
 
-    <section class="grid">
-        <article class="panel form-panel">
-            <div class="panel-heading">
-                <p class="eyebrow" th:text="${editId == null ? 'Nuevo registro' : 'Edicion'}">Nuevo registro</p>
-                <h2 th:text="${editId == null ? 'Registrar articulo' : 'Actualizar articulo'}">Registrar articulo</h2>
+    <div class="main-area">
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1 class="topbar-title">
+                    <i class="fas fa-boxes-stacked"></i> Inventario activo
+                </h1>
+                <span class="topbar-badge">Entregable 5</span>
             </div>
+            <div class="topbar-right">
+                <div class="topbar-info">
+                    <i class="fas fa-database"></i>
+                    <span th:text="${dbDisplay}">localhost:1433</span>
+                </div>
+                <div class="topbar-info">
+                    <i class="fas fa-server"></i>
+                    <span th:text="${ftpDisplay}">localhost:21</span>
+                </div>
+            </div>
+        </header>
 
-            <form method="post" th:object="${articuloForm}"
-                  th:action="${editId == null} ? @{/articulos} : @{/articulos/{id}(id=${editId})}">
-                <label>
-                    ID
-                    <input type="number" min="1" required th:field="*{id}" th:readonly="${editId != null}">
-                </label>
-                <label>
-                    Descripcion
-                    <input type="text" maxlength="50" required th:field="*{descripcion}">
-                </label>
-                <label>
-                    Precio
-                    <input type="number" min="0" step="0.01" required th:field="*{precio}">
-                </label>
-                <label>
-                    Stock
-                    <input type="number" min="0" required th:field="*{stock}">
-                </label>
+        <div th:if="${success}" class="alert success">
+            <i class="fas fa-check-circle"></i>
+            <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="alert error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span th:text="${error}"></span>
+        </div>
 
-                <div class="actions">
-                    <button type="submit" class="primary" th:text="${editId == null ? 'Registrar' : 'Guardar cambios'}">
-                        Registrar
+        <div class="card table-card">
+            <div class="card-header card-header-row">
+                <div class="card-header-icon">
+                    <i class="fas fa-table-list"></i>
+                </div>
+                <div class="card-header-text">
+                    <p class="card-eyebrow">Datos operacionales</p>
+                    <h2 class="card-title">Inventario activo</h2>
+                </div>
+                <div class="card-header-actions">
+                    <span class="badge">
+                        <i class="fas fa-cubes"></i>
+                        <span th:text="${#lists.size(articulos)} + ' articulos'">0</span>
+                    </span>
+                    <button type="button" class="btn btn-primary" id="btn-nuevo">
+                        <i class="fas fa-plus"></i> Nuevo
                     </button>
-                    <a th:href="@{/articulos}" class="secondary">Limpiar</a>
-                </div>
-            </form>
-        </article>
-
-        <article class="panel table-panel">
-            <div class="panel-heading table-heading">
-                <div>
-                    <p class="eyebrow">Datos operacionales</p>
-                    <h2>Inventario activo</h2>
-                </div>
-                <div class="table-tools">
-                    <span class="counter" th:text="${#lists.size(articulos)} + ' articulos'">0 articulos</span>
                     <button type="button"
-                            class="secondary export-button"
+                            class="btn btn-export"
                             data-pdf-export
                             data-table-target="#inventory-table"
                             data-document-title="Inventario activo - MinimarketPOS">
-                        Exportar PDF
+                        <i class="fas fa-file-pdf"></i> PDF
                     </button>
                 </div>
             </div>
@@ -84,47 +90,208 @@
                 <table id="inventory-table">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Descripcion</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th data-pdf-ignore>Acciones</th>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-tag"></i> Descripcion</th>
+                        <th><i class="fas fa-dollar-sign"></i> Precio</th>
+                        <th><i class="fas fa-boxes"></i> Stock</th>
+                        <th data-pdf-ignore><i class="fas fa-tools"></i> Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(articulos)}">
-                        <td colspan="5" class="empty">No hay articulos registrados.</td>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No hay articulos registrados</p>
+                            </div>
+                        </td>
                     </tr>
-                    <tr th:each="articulo : ${articulos}">
-                        <td th:text="${articulo.id}">1</td>
-                        <td th:text="${articulo.descripcion}">Arroz</td>
-                        <td th:text="${#numbers.formatDecimal(articulo.precio, 1, 2)}">5.50</td>
-                        <td th:text="${articulo.stock}">20</td>
+                    <tr th:each="articulo : ${articulos}"
+                        th:attr="data-id=${articulo.id},
+                                 data-descripcion=${articulo.descripcion},
+                                 data-precio=${articulo.precio},
+                                 data-stock=${articulo.stock}">
+                        <td><span class="id-badge" th:text="${articulo.id}">1</span></td>
+                        <td class="cell-desc" th:text="${articulo.descripcion}">Arroz</td>
+                        <td class="cell-price" th:text="'S/ ' + ${#numbers.formatDecimal(articulo.precio, 1, 2)}">5.50</td>
+                        <td>
+                            <span class="stock-badge" th:text="${articulo.stock}"
+                                  th:classappend="${articulo.stock < 10} ? 'low' : (${articulo.stock < 30} ? 'medium' : '')">20</span>
+                        </td>
                         <td class="row-actions" data-pdf-ignore>
-                            <a th:href="@{/articulos/{id}/editar(id=${articulo.id})}" class="link-button">Editar</a>
-                            <form method="post" th:action="@{/articulos/{id}/eliminar(id=${articulo.id})}">
-                                <button type="submit" class="danger">Eliminar</button>
-                            </form>
+                            <button type="button" class="icon-btn edit btn-editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="icon-btn delete btn-eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-        </article>
-    </section>
-
-    <section class="flow panel">
-        <p class="eyebrow">Flujo del entregable</p>
-        <div class="steps">
-            <span>Web MVC</span>
-            <span>MinimarketDB</span>
-            <span>FTP Docker</span>
-            <span>Mirror</span>
-            <span>DataWarehouse</span>
-            <span>OLAP</span>
         </div>
-    </section>
-</main>
+    </div>
+</div>
+
+<!-- ========== MODAL: Add / Edit ========== -->
+<div class="modal-overlay" id="modal-form">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-icon">
+                <i class="fas fa-plus" id="modal-icon-add"></i>
+                <i class="fas fa-pen" id="modal-icon-edit" style="display:none"></i>
+            </div>
+            <div>
+                <p class="card-eyebrow modal-eyebrow" id="modal-eyebrow">Nuevo registro</p>
+                <h2 class="modal-title" id="modal-title">Registrar articulo</h2>
+            </div>
+            <button type="button" class="modal-close" id="modal-close">&times;</button>
+        </div>
+
+        <form method="post" id="form-articulo">
+            <input type="hidden" name="_method" id="form-method" value="post">
+            <div class="field">
+                <label><i class="fas fa-hashtag"></i> ID</label>
+                <input type="number" min="1" required name="id" id="field-id">
+            </div>
+            <div class="field">
+                <label><i class="fas fa-tag"></i> Descripcion</label>
+                <input type="text" maxlength="50" required name="descripcion" id="field-descripcion">
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label><i class="fas fa-dollar-sign"></i> Precio</label>
+                    <input type="number" min="0" step="0.01" required name="precio" id="field-precio">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-boxes"></i> Stock</label>
+                    <input type="number" min="0" required name="stock" id="field-stock">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-submit">
+                    <i class="fas fa-save" id="btn-submit-icon-save"></i>
+                    <i class="fas fa-pen" id="btn-submit-icon-edit" style="display:none"></i>
+                    <span id="btn-submit-text">Registrar</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-cancel">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========== MODAL: Delete confirm ========== -->
+<div class="modal-overlay" id="modal-delete">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <div class="modal-header-icon danger-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <div>
+                <h2 class="modal-title">Eliminar articulo</h2>
+                <p class="modal-desc" id="delete-desc">¿Esta seguro de eliminar este articulo?</p>
+            </div>
+            <button type="button" class="modal-close" id="delete-close">&times;</button>
+        </div>
+        <div class="form-actions" style="justify-content:flex-end;margin-top:0">
+            <button type="button" class="btn btn-secondary" id="delete-cancel">Cancelar</button>
+            <form method="post" id="form-delete">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/js/plugins/table-pdf-export-plugin.js}"></script>
+<script th:src="@{/js/plugins/security-activity-plugin.js}"></script>
+<script>
+(function() {
+    var modalForm = document.getElementById("modal-form");
+    var modalDelete = document.getElementById("modal-delete");
+    var formArticulo = document.getElementById("form-articulo");
+
+    // Add / Edit
+    document.getElementById("btn-nuevo").addEventListener("click", function() {
+        document.getElementById("field-id").removeAttribute("readonly");
+        document.getElementById("field-id").value = "";
+        document.getElementById("field-descripcion").value = "";
+        document.getElementById("field-precio").value = "";
+        document.getElementById("field-stock").value = "";
+        formArticulo.action = "/articulos";
+        document.getElementById("modal-icon-add").style.display = "inline";
+        document.getElementById("modal-icon-edit").style.display = "none";
+        document.getElementById("btn-submit-icon-save").style.display = "inline";
+        document.getElementById("btn-submit-icon-edit").style.display = "none";
+        document.getElementById("btn-submit-text").textContent = "Registrar";
+        document.getElementById("modal-eyebrow").textContent = "Nuevo registro";
+        document.getElementById("modal-title").textContent = "Registrar articulo";
+        modalForm.style.display = "flex";
+        document.getElementById("field-id").focus();
+    });
+
+    document.querySelectorAll(".btn-editar").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            var tr = btn.closest("tr");
+            var id = tr.dataset.id;
+            var desc = tr.dataset.descripcion;
+            var precio = tr.dataset.precio;
+            var stock = tr.dataset.stock;
+            document.getElementById("field-id").value = id;
+            document.getElementById("field-id").setAttribute("readonly", "readonly");
+            document.getElementById("field-descripcion").value = desc;
+            document.getElementById("field-precio").value = precio;
+            document.getElementById("field-stock").value = stock;
+            formArticulo.action = "/articulos/" + id;
+            document.getElementById("modal-icon-add").style.display = "none";
+            document.getElementById("modal-icon-edit").style.display = "inline";
+            document.getElementById("btn-submit-icon-save").style.display = "none";
+            document.getElementById("btn-submit-icon-edit").style.display = "inline";
+            document.getElementById("btn-submit-text").textContent = "Guardar cambios";
+            document.getElementById("modal-eyebrow").textContent = "Edicion";
+            document.getElementById("modal-title").textContent = "Actualizar articulo";
+            modalForm.style.display = "flex";
+            document.getElementById("field-descripcion").focus();
+        });
+    });
+
+    document.getElementById("modal-close").addEventListener("click", function() {
+        modalForm.style.display = "none";
+    });
+    document.getElementById("btn-cancel").addEventListener("click", function() {
+        modalForm.style.display = "none";
+    });
+
+    // Delete
+    document.querySelectorAll(".btn-eliminar").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            var tr = btn.closest("tr");
+            var desc = tr.dataset.descripcion;
+            document.getElementById("delete-desc").textContent =
+                "¿Esta seguro de eliminar \"" + desc + "\"? Esta accion no se puede deshacer.";
+            document.getElementById("form-delete").action = "/articulos/" + tr.dataset.id + "/eliminar";
+            modalDelete.style.display = "flex";
+        });
+    });
+
+    document.getElementById("delete-close").addEventListener("click", function() {
+        modalDelete.style.display = "none";
+    });
+    document.getElementById("delete-cancel").addEventListener("click", function() {
+        modalDelete.style.display = "none";
+    });
+
+    // Close modals on overlay click
+    modalForm.addEventListener("click", function(e) {
+        if (e.target === modalForm) modalForm.style.display = "none";
+    });
+    modalDelete.addEventListener("click", function(e) {
+        if (e.target === modalDelete) modalDelete.style.display = "none";
+    });
+})();
+</script>
 </body>
 </html>
