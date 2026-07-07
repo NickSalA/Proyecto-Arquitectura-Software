@@ -17,6 +17,7 @@ object AppConfig {
         return deProp ?: deEnv ?: error("Configuracion faltante: $key o variable $envName. Definala en config.properties o como variable de entorno.")
     }
 
+    // Propiedades
     private val dbHost = getProp("db.host", "DB_HOST")
     private val dbPort = getProp("db.port", "DB_PORT")
     private val dbUser = getProp("db.user", "DB_USER")
