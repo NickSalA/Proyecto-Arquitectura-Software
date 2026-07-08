@@ -1,9 +1,15 @@
 plugins {
     kotlin("jvm") version "2.1.20"
     kotlin("plugin.spring") version "2.1.20"
+    kotlin("plugin.noarg") version "2.1.20"
     id("org.springframework.boot") version "3.3.6"
     id("io.spring.dependency-management") version "1.1.5"
     application
+}
+
+noArg {
+    annotation("jakarta.xml.bind.annotation.XmlRootElement")
+    annotation("jakarta.xml.bind.annotation.XmlType")
 }
 
 group = "minimarket"
@@ -16,6 +22,11 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-web-services")
+
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api")
+    runtimeOnly("org.glassfish.jaxb:jaxb-runtime")
+    implementation("wsdl4j:wsdl4j")
 
     implementation("com.microsoft.sqlserver:mssql-jdbc:13.2.1.jre11")
     implementation("commons-net:commons-net:3.11.1")
@@ -33,7 +44,7 @@ tasks.withType<JavaCompile> {
 }
 
 application {
-    mainClass.set("minimarket.client.MainKt")
+    mainClass.set("minimarket.web.WebApplicationKt")
 }
 
 springBoot {

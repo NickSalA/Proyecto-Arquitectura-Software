@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://minimarket.plugin/soap/margen"
+           targetNamespace="http://minimarket.plugin/soap/margen"
+           elementFormDefault="qualified">
+
+    <xs:element name="CalcularMargenRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="precioCompra" type="xs:decimal"/>
+                <xs:element name="precioVenta" type="xs:decimal"/>
+                <xs:element name="cantidad" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CalcularMargenResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="precioCompra" type="xs:decimal"/>
+                <xs:element name="precioVenta" type="xs:decimal"/>
+                <xs:element name="cantidad" type="xs:int"/>
+                <xs:element name="gananciaUnitaria" type="xs:decimal"/>
+                <xs:element name="gananciaTotal" type="xs:decimal"/>
+                <xs:element name="margenPorcentual" type="xs:decimal"/>
+                <xs:element name="margenSobreCosto" type="xs:decimal"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

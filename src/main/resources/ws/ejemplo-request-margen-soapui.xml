@@ -1,0 +1,11 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:mar="http://minimarket.plugin/soap/margen">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <mar:CalcularMargenRequest>
+         <mar:precioCompra>100.00</mar:precioCompra>
+         <mar:precioVenta>150.00</mar:precioVenta>
+         <mar:cantidad>10</mar:cantidad>
+      </mar:CalcularMargenRequest>
+   </soapenv:Body>
+</soapenv:Envelope>

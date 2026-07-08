@@ -1,7 +1,10 @@
 #!/bin/bash
 # ============================================================
-# Script de compilacion para MinimarketPOS - Entregable 2
+# Script de compilacion manual (alternativa a Gradle)
 # Compila cliente Swing, ETL y consultas OLAP en JARs ejecutables.
+# NOTA: La mayoria de las funcionalidades requieren Gradle:
+#   ./gradlew runWeb        # Aplicacion Web MVC + REST + SOAP
+#   ./gradlew runMain       # Cliente Swing
 # ============================================================
 
 set -e
@@ -90,22 +93,22 @@ compile_jar() {
 
 compile_jar 1 "Main" "aplicacion principal (Main)" \
     "$SRC_DIR/minimarket/data/model/Articulo.kt" \
-    "$SRC_DIR/minimarket/application/AppConfig.kt" \
-    "$SRC_DIR/minimarket/data/persistence/RepositorioArticulosSQL.kt" \
-    "$SRC_DIR/minimarket/application/Main.kt"
+    "$SRC_DIR/minimarket/config/AppConfig.kt" \
+    "$SRC_DIR/minimarket/data/repository/RepositorioArticulosSQL.kt" \
+    "$SRC_DIR/minimarket/client/Main.kt"
 
 compile_jar 2 "GenerarDatawareHouse" "proceso ETL (GenerarDatawareHouse)" \
     "$SRC_DIR/minimarket/data/model/Articulo.kt" \
-    "$SRC_DIR/minimarket/application/AppConfig.kt" \
-    "$SRC_DIR/minimarket/etl/GenerarDatawareHouse.kt"
+    "$SRC_DIR/minimarket/config/AppConfig.kt" \
+    "$SRC_DIR/minimarket/dw/GenerarDatawareHouse.kt"
 
 compile_jar 3 "CreateCrossTab" "creacion de vista OLAP (CreateCrossTab)" \
-    "$SRC_DIR/minimarket/application/AppConfig.kt" \
-    "$SRC_DIR/minimarket/olap/CreateCrossTab.kt"
+    "$SRC_DIR/minimarket/config/AppConfig.kt" \
+    "$SRC_DIR/minimarket/dw/CreateCrossTab.kt"
 
 compile_jar 4 "ViewCrossTab" "visualizacion OLAP (ViewCrossTab)" \
-    "$SRC_DIR/minimarket/application/AppConfig.kt" \
-    "$SRC_DIR/minimarket/olap/ViewCrossTab.kt"
+    "$SRC_DIR/minimarket/config/AppConfig.kt" \
+    "$SRC_DIR/minimarket/dw/ViewCrossTab.kt"
 
 echo "══════════════════════════════════════════════════"
 echo -e "${GREEN}  Compilacion completada exitosamente${NC}"

@@ -85,5 +85,6 @@ class ArticuloController(
         model.addAttribute("saTimeout", AppConfig.SECURITY_INACTIVITY_TIMEOUT)
         model.addAttribute("saWarning", AppConfig.SECURITY_WARNING_TIME)
         model.addAttribute("saHeartbeat", AppConfig.SECURITY_HEARTBEAT_INTERVAL)
+        model.addAttribute("saOperator", AppConfig.SECURITY_OPERATOR)
     }
 }

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://minimarket.plugin/soap"
+           targetNamespace="http://minimarket.plugin/soap"
+           elementFormDefault="qualified">
+
+    <xs:complexType name="ArticleDto">
+        <xs:sequence>
+            <xs:element name="id" type="xs:int"/>
+            <xs:element name="descripcion" type="xs:string"/>
+            <xs:element name="precio" type="xs:double"/>
+            <xs:element name="stock" type="xs:int"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="GetAllArticlesRequest">
+        <xs:complexType/>
+    </xs:element>
+
+    <xs:element name="GetAllArticlesResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="articles" type="tns:ArticleDto" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetArticleByIdRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetArticleByIdResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="article" type="tns:ArticleDto" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CreateArticleRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="article" type="tns:ArticleDto"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CreateArticleResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="UpdateArticleRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="article" type="tns:ArticleDto"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="UpdateArticleResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="DeleteArticleRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="DeleteArticleResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

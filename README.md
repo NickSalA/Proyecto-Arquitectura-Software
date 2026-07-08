@@ -1,44 +1,55 @@
-# MinimarketPOS - Entregable 4
+# Sistema de Gestion de Inventario
 
-> Modelo de Arquitectura MVC con N Capas: Aplicacion, Datos, FTP, Mirror, DataWarehouse y plugin PDF independiente.
+> Arquitectura MVC con N Capas: Aplicacion Web, API REST, WebService SOAP, FTP, Mirror, DataWarehouse y Plugins independientes (PDF + Seguridad).
 
 ## Descripcion
 
-MinimarketPOS es un sistema de gestion de inventario para una cadena de minimarkets. En este entregable la aplicacion se expone como una solucion Web MVC, mantiene sus datos operacionales en SQL Server, publica una copia por FTP, sincroniza una base Mirror, alimenta un DataWarehouse para consultas OLAP e incorpora un plugin frontend independiente para exportar la tabla de inventario a PDF.
+Sistema de gestion de inventario para minimarket. La aplicacion se expone como solucion Web MVC con API REST y WebService SOAP, mantiene sus datos operacionales en SQL Server, publica una copia por FTP, sincroniza una base Mirror, alimenta un DataWarehouse para consultas OLAP e incorpora plugins independientes (exportacion PDF y monitoreo de actividad del operador).
 
 ## Arquitectura
 
 ```text
-Cliente Web
-   -> Vista Thymeleaf / HTML / CSS
-   -> Plugin PDF de tabla (JS independiente)
-   -> Controller MVC
+Cliente Web (Thymeleaf)
+   -> Vista HTML / CSS / JS
+   -> Plugins JS (PDF Export + Security Activity)
+   -> Controller MVC / API REST
    -> Service
    -> Repository JDBC
    -> MinimarketDB
-   -> ExportarFTP
-   -> Servidor FTP Docker
-   -> ActualizarMirror
-   -> MinimarketMirror
-   -> GenerarDatawareHouse
-   -> MinimarketDW
-   -> CreateCrossTab / ViewCrossTab
+   -> ExportarFTP -> FTP Docker -> ActualizarMirror -> MinimarketMirror
+                                                         |
+                                                         v
+                                                    GenerarDatawareHouse
+                                                         |
+                                                         v
+                                                    MinimarketDW (Estrella)
+                                                         |
+                                                         v
+                                                    CreateCrossTab / ViewCrossTab (OLAP)
+
+SOAP Client (SoapUI / curl)
+   -> /ws/* (MessageDispatcherServlet)
+   -> SoapArticleEndpoint
+   -> ArticuloService (mismo que el REST y MVC)
+   -> Repository JDBC -> MinimarketDB
 ```
 
 ## Componentes
 
 | Componente | Ruta | Responsabilidad |
 |------------|------|-----------------|
-| Web MVC | `src/main/kotlin/minimarket/web` | Controladores Spring MVC y arranque web |
-| Vistas | `src/main/resources/templates` | Interfaz HTML Thymeleaf |
-| Estilos | `src/main/resources/static/css` | Presentacion de la aplicacion web |
-| Plugin PDF | `src/main/resources/static/js/plugins/table-pdf-export-plugin.js` | Exporta tablas HTML a una vista imprimible para guardar como PDF |
-| Service | `src/main/kotlin/minimarket/service` | Validaciones y reglas de negocio |
-| Repository | `src/main/kotlin/minimarket/data/persistence` | Llamadas JDBC a procedimientos almacenados SQL Server |
-| FTP | `src/main/kotlin/minimarket/ftp/ExportarFTP.kt` | Exporta datos a `articulos.csv` en FTP |
-| Mirror | `src/main/kotlin/minimarket/mirror/ActualizarMirror.kt` | Descarga CSV y sincroniza `MinimarketMirror` |
-| ETL | `src/main/kotlin/minimarket/etl` | Carga `MinimarketDW` desde Mirror |
-| OLAP | `src/main/kotlin/minimarket/olap` | Crea y visualiza CrossTab |
+| Web MVC | `minimarket/web/controller` | Controladores Spring MVC |
+| API REST | `minimarket/api/controller` | Endpoints REST JSON `/api/articulos` |
+| WebService SOAP | `minimarket/plugin/webservice/soap` | Endpoint SOAP en `/ws/*` con WSDL generado |
+| Vistas | `templates/articulos/index.html` | Interfaz HTML Thymeleaf |
+| Plugin PDF | `static/js/plugins/table-pdf-export-plugin.js` | Exporta tablas HTML a PDF desde el navegador |
+| Plugin Seguridad | `static/js/plugins/security-activity-plugin.js` + `minimarket/plugin/seguridad` | Monitorea actividad del operador y bloquea por inactividad |
+| Service | `minimarket/service` | Validaciones y reglas de negocio |
+| Repository | `minimarket/data/repository` | Llamadas JDBC a procedimientos almacenados SQL Server |
+| FTP | `minimarket/ftp/ExportarFTP.kt` | Exporta datos a `articulos.csv` en FTP |
+| Mirror | `minimarket/mirror/ActualizarMirror.kt` | Descarga CSV y sincroniza `MinimarketMirror` |
+| ETL | `minimarket/dw/GenerarDatawareHouse.kt` | Carga `MinimarketDW` desde Mirror |
+| OLAP | `minimarket/dw/CreateCrossTab.kt` + `ViewCrossTab.kt` | Crea y visualiza CrossTab |
 
 ## Requisitos
 
@@ -121,9 +132,48 @@ Abrir:
 http://localhost:8080/articulos
 ```
 
-La vista de articulos incluye el boton `Exportar PDF`, conectado al plugin independiente `table-pdf-export-plugin.js`.
+La vista de articulos incluye:
+- Boton `Exportar PDF`, conectado al plugin `table-pdf-export-plugin.js`.
+- Monitoreo de actividad con bloqueo automatico por inactividad (plugin `security-activity-plugin.js`).
+- El operador se configura en `config.properties` (`plugin.security.operator`).
 
-### 4. Exportar datos al FTP
+### 4. API REST
+
+La API REST esta disponible en `http://localhost:8080/api/articulos`:
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| `GET` | `/api/articulos` | Listar todos los articulos |
+| `GET` | `/api/articulos/{id}` | Buscar articulo por ID |
+| `POST` | `/api/articulos` | Crear articulo |
+| `PUT` | `/api/articulos/{id}` | Actualizar articulo |
+| `DELETE` | `/api/articulos/{id}` | Eliminar articulo |
+
+### 5. WebService SOAP
+
+El WebService SOAP esta disponible en `http://localhost:8080/ws`:
+
+| Recurso | URL |
+|---------|-----|
+| WSDL | `http://localhost:8080/ws/articles.wsdl` |
+| Endpoint SOAP | `http://localhost:8080/ws` (POST con XML SOAP) |
+
+Operaciones: `GetAllArticles`, `GetArticleById`, `CreateArticle`, `UpdateArticle`, `DeleteArticle`.
+
+### 6. Pruebas
+
+#### Con SoapUI
+```text
+File -> Import Project -> minimarket-rest-soapui-project.xml   # Pruebas REST
+```
+
+#### Con scripts bash
+```bash
+./test-api.sh       # 12 pruebas REST + reporte HTML
+./test-api-soap.sh  # 10 pruebas SOAP + reporte HTML
+```
+
+### 7. Exportar datos al FTP
 
 ```bash
 ./gradlew runExportarFTP
@@ -131,7 +181,7 @@ La vista de articulos incluye el boton `Exportar PDF`, conectado al plugin indep
 
 Este comando lee `MinimarketDB.Articulos`, genera `articulos.csv` y lo sube al servidor FTP Docker.
 
-### 5. Actualizar Mirror desde FTP
+### 8. Actualizar Mirror desde FTP
 
 ```bash
 ./gradlew runActualizarMirror
@@ -139,7 +189,7 @@ Este comando lee `MinimarketDB.Articulos`, genera `articulos.csv` y lo sube al s
 
 Este comando descarga `/articulos.csv` desde FTP y sincroniza `MinimarketMirror.ArticulosMirror`.
 
-### 6. Generar DataWarehouse
+### 9. Generar DataWarehouse
 
 ```bash
 ./gradlew runGenerarDatawareHouse
@@ -147,7 +197,7 @@ Este comando descarga `/articulos.csv` desde FTP y sincroniza `MinimarketMirror.
 
 El ETL toma como origen los articulos activos de `MinimarketMirror`.
 
-### 7. Crear y visualizar CrossTab
+### 10. Crear y visualizar CrossTab
 
 ```bash
 ./gradlew runCreateCrossTab
@@ -178,14 +228,9 @@ El ETL toma como origen los articulos activos de `MinimarketMirror`.
 
 ## Documentacion
 
-El documento tecnico del Entregable 3 esta en:
-
-```text
-docs/entregable3-arquitectura.md
-```
-
-El documento tecnico del Entregable 4 esta en:
-
-```text
-docs/entregable4-plugin-pdf.md
-```
+| Documento | Contenido |
+|-----------|-----------|
+| `docs/entregable3-arquitectura.md` | Arquitectura MVC con N capas, FTP, Mirror, DW, OLAP |
+| `docs/entregable4-plugin-pdf.md` | Plugin PDF Export (frontend JS) |
+| `docs/entregable5-plugin-seguridad.md` | Plugin Seguridad y Monitoreo de Actividad |
+| `docs/entregable6-plugins-webservice-soapui.md` | Plugins, WebService REST y SOAP, pruebas SoapUI |

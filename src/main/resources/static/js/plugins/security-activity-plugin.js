@@ -27,12 +27,12 @@
         var opts = readOptions(el);
 
         startTracking(el, opts);
-        state.heartbeatId = setInterval(sendHeartbeat, opts.heartbeat * 1000);
+        state.heartbeatId = setInterval(function () { sendHeartbeat(el); }, opts.heartbeat * 1000);
         state.intervalId = setInterval(function () {
             tick(el, opts);
         }, 1000);
 
-        sendHeartbeat();
+        sendHeartbeat(el);
     }
 
     function readOptions(el) {
@@ -122,29 +122,35 @@
         }
         overlay.style.display = "flex";
 
-        sendEstado("inactivo");
+        sendEstado("inactivo", el);
 
         var unlock = function () {
             state.locked = false;
             state.idleTime = 0;
             overlay.style.display = "none";
-            sendEstado("activo");
+            sendEstado("activo", el);
             el.removeEventListener("mousemove", unlock);
         };
 
         el.addEventListener("mousemove", unlock);
     }
 
-    function sendHeartbeat() {
-        sendEstado(state.locked ? "inactivo" : "activo");
+    function sendHeartbeat(el) {
+        sendEstado(state.locked ? "inactivo" : "activo", el);
     }
 
-    function sendEstado(estado) {
+    function getOperator(el) {
+        var el = el || document.querySelector(enabledSelector);
+        return el ? (el.getAttribute("data-sa-operator") || "operador") : "operador";
+    }
+
+    function sendEstado(estado, el) {
+        var operador = getOperator(el);
         try {
             fetch("/api/actividad/heartbeat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ operador: "operador", estado: estado })
+                body: JSON.stringify({ operador: operador, estado: estado })
             }).catch(function () {});
         } catch (_) {}
     }
