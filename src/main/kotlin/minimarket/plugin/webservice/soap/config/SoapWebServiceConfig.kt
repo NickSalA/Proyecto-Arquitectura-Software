@@ -1,5 +1,18 @@
 package minimarket.plugin.webservice.soap.config
 
+import minimarket.plugin.webservice.soap.model.ArticleDto
+import minimarket.plugin.webservice.soap.model.CreateArticleRequest
+import minimarket.plugin.webservice.soap.model.CreateArticleResponse
+import minimarket.plugin.webservice.soap.model.DeleteArticleRequest
+import minimarket.plugin.webservice.soap.model.DeleteArticleResponse
+import minimarket.plugin.webservice.soap.model.GetAllArticlesRequest
+import minimarket.plugin.webservice.soap.model.GetAllArticlesResponse
+import minimarket.plugin.webservice.soap.model.GetArticleByIdRequest
+import minimarket.plugin.webservice.soap.model.GetArticleByIdResponse
+import minimarket.plugin.webservice.soap.model.MargenRequest
+import minimarket.plugin.webservice.soap.model.MargenResponse
+import minimarket.plugin.webservice.soap.model.UpdateArticleRequest
+import minimarket.plugin.webservice.soap.model.UpdateArticleResponse
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -56,7 +69,21 @@ class SoapWebServiceConfig : WsConfigurerAdapter() {
     @Bean
     fun jaxb2Marshaller(): Jaxb2Marshaller {
         val marshaller = Jaxb2Marshaller()
-        marshaller.contextPath = "minimarket.plugin.webservice.soap.model"
+        marshaller.setClassesToBeBound(
+            ArticleDto::class.java,
+            GetAllArticlesRequest::class.java,
+            GetAllArticlesResponse::class.java,
+            GetArticleByIdRequest::class.java,
+            GetArticleByIdResponse::class.java,
+            CreateArticleRequest::class.java,
+            CreateArticleResponse::class.java,
+            UpdateArticleRequest::class.java,
+            UpdateArticleResponse::class.java,
+            DeleteArticleRequest::class.java,
+            DeleteArticleResponse::class.java,
+            MargenRequest::class.java,
+            MargenResponse::class.java
+        )
         return marshaller
     }
 }
