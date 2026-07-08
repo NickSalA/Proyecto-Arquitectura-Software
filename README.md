@@ -29,9 +29,8 @@ Cliente Web (Thymeleaf)
 
 SOAP Client (SoapUI / curl)
    -> /ws/* (MessageDispatcherServlet)
-   -> SoapArticleEndpoint
-   -> ArticuloService (mismo que el REST y MVC)
-   -> Repository JDBC -> MinimarketDB
+   -> MargenEndpoint
+   -> MargenService (calculo de margen en memoria)
 ```
 
 ## Componentes
@@ -40,7 +39,7 @@ SOAP Client (SoapUI / curl)
 |------------|------|-----------------|
 | Web MVC | `minimarket/web/controller` | Controladores Spring MVC |
 | API REST | `minimarket/api/controller` | Endpoints REST JSON `/api/articulos` |
-| WebService SOAP | `minimarket/plugin/webservice/soap` | Endpoint SOAP en `/ws/*` con WSDL generado |
+| WebService SOAP | `minimarket/plugin/webservice/soap` | Endpoint SOAP de margen en `/ws/*` con WSDL generado |
 | Vistas | `templates/articulos/index.html` | Interfaz HTML Thymeleaf |
 | Plugin PDF | `static/js/plugins/table-pdf-export-plugin.js` | Exporta tablas HTML a PDF desde el navegador |
 | Plugin Seguridad | `static/js/plugins/security-activity-plugin.js` + `minimarket/plugin/seguridad` | Monitorea actividad del operador y bloquea por inactividad |
@@ -149,16 +148,16 @@ La API REST esta disponible en `http://localhost:8080/api/articulos`:
 | `PUT` | `/api/articulos/{id}` | Actualizar articulo |
 | `DELETE` | `/api/articulos/{id}` | Eliminar articulo |
 
-### 5. WebService SOAP
+### 5. WebService SOAP (Margen)
 
-El WebService SOAP esta disponible en `http://localhost:8080/ws`:
+El WebService SOAP de cálculo de margen está disponible en `http://localhost:8080/ws`:
 
 | Recurso | URL |
 |---------|-----|
-| WSDL | `http://localhost:8080/ws/articles.wsdl` |
+| WSDL | `http://localhost:8080/ws/margen.wsdl` |
 | Endpoint SOAP | `http://localhost:8080/ws` (POST con XML SOAP) |
 
-Operaciones: `GetAllArticles`, `GetArticleById`, `CreateArticle`, `UpdateArticle`, `DeleteArticle`.
+Operación: `CalcularMargenRequest` — calcula ganancia unitaria, ganancia total, margen porcentual y margen sobre costo a partir de precio de compra, precio de venta y cantidad.
 
 ### 6. Pruebas
 
@@ -170,7 +169,7 @@ File -> Import Project -> minimarket-rest-soapui-project.xml   # Pruebas REST
 #### Con scripts bash
 ```bash
 ./test-api.sh       # 12 pruebas REST + reporte HTML
-./test-api-soap.sh  # 10 pruebas SOAP + reporte HTML
+./test-api-soap.sh  # 5 pruebas SOAP de margen + reporte HTML
 ```
 
 ### 7. Exportar datos al FTP

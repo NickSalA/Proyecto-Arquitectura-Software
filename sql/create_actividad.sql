@@ -39,7 +39,7 @@ BEGIN
         UPDATE RegistroActividad
         SET Estado = @Estado,
             UltimoLatido = GETDATE(),
-            FinSesion = CASE WHEN @Estado = 'ausente' THEN GETDATE() ELSE NULL END
+            FinSesion = CASE WHEN @Estado = 'ausente' THEN GETDATE() ELSE FinSesion END
         WHERE Operador = @Operador;
     END
     ELSE

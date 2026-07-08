@@ -1,11 +1,10 @@
 #!/bin/bash
 # ===========================================
-# Test Suite para WebService SOAP MinimarketPOS
+# Test Suite para WebService SOAP de Margen
 # Uso: bash test-api-soap.sh
 # Requisitos: curl, python3 (para formatear)
 # ===========================================
 BASE="http://localhost:8080/ws"
-NAMESPACE="http://minimarket.plugin/soap"
 PASS=0
 FAIL=0
 REPORT="test-api-soap-report.html"
@@ -14,139 +13,12 @@ declare -a TEST_NAMES=()
 declare -a TEST_RESULTS=()
 declare -a TEST_DETAILS=()
 
-soap_envelope() {
-    local body="$1"
-    cat <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:pla="$NAMESPACE">
-   <soapenv:Header/>
-   <soapenv:Body>
-      $body
-   </soapenv:Body>
-</soapenv:Envelope>
-EOF
-}
-
-soap_call() {
-    local desc="$1" action="$2" body="$3" expected="$4"
-    local payload
-    payload=$(soap_envelope "$body")
-    local response
-    response=$(curl -s -X POST "$BASE" \
-        -H "Content-Type: text/xml;charset=UTF-8" \
-        -H "SOAPAction: \"$action\"" \
-        -d "$payload" 2>/dev/null)
-
-    local http_code
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE" \
-        -H "Content-Type: text/xml;charset=UTF-8" \
-        -H "SOAPAction: \"$action\"" \
-        -d "$payload" 2>/dev/null)
-
-    if echo "$response" | grep -q "$expected"; then
-        echo "  PASS | $desc (HTTP $http_code)"
-        ((PASS++))
-        TEST_NAMES+=("$desc")
-        TEST_RESULTS+=("PASS")
-        TEST_DETAILS+=("HTTP $http_code | Esperado: $expected | OK")
-    else
-        echo "  FAIL | $desc (HTTP $http_code)"
-        echo "        Esperado: $expected"
-        echo "        Obtenido: $(echo "$response" | head -c 300)"
-        ((FAIL++))
-        TEST_NAMES+=("$desc")
-        TEST_RESULTS+=("FAIL")
-        TEST_DETAILS+=("HTTP $http_code | Esperado: $expected | Obtenido: $(echo "$response" | sed 's/</\&lt;/g' | head -c 200)")
-    fi
-}
-
 echo ""
 echo "╔══════════════════════════════════════╗"
-echo "║  MinimarketPOS - SOAP Test Suite     ║"
+echo "║  MinimarketPOS - SOAP Margen Suite   ║"
 echo "╚══════════════════════════════════════╝"
 echo ""
 
-# 1. GetAllArticles
-echo "▶ 1. GetAllArticles"
-soap_call "Listar articulos (SOAP)" "" \
-    '<pla:GetAllArticlesRequest/>' \
-    'GetAllArticlesResponse'
-
-# 2. CreateArticle
-echo "▶ 2. CreateArticle"
-soap_call "Crear articulo 88 vía SOAP" "" \
-    '<pla:CreateArticleRequest>
-       <pla:article>
-          <pla:id>88</pla:id>
-          <pla:descripcion>Laptop SOAP Test</pla:descripcion>
-          <pla:precio>2500.0</pla:precio>
-          <pla:stock>5</pla:stock>
-       </pla:article>
-    </pla:CreateArticleRequest>' \
-    'true'
-
-# 3. GetArticleById
-echo "▶ 3. GetArticleById"
-soap_call "Buscar articulo 88 vía SOAP" "" \
-    '<pla:GetArticleByIdRequest>
-       <pla:id>88</pla:id>
-    </pla:GetArticleByIdRequest>' \
-    'Laptop SOAP Test'
-
-# 4. UpdateArticle
-echo "▶ 4. UpdateArticle"
-soap_call "Actualizar articulo 88 vía SOAP" "" \
-    '<pla:UpdateArticleRequest>
-       <pla:article>
-          <pla:id>88</pla:id>
-          <pla:descripcion>Laptop SOAP Test Pro</pla:descripcion>
-          <pla:precio>3200.0</pla:precio>
-          <pla:stock>3</pla:stock>
-       </pla:article>
-    </pla:UpdateArticleRequest>' \
-    'true'
-
-soap_call "Verificar actualizacion vía SOAP" "" \
-    '<pla:GetArticleByIdRequest>
-       <pla:id>88</pla:id>
-    </pla:GetArticleByIdRequest>' \
-    'Laptop SOAP Test Pro'
-
-# 5. DeleteArticle
-echo "▶ 5. DeleteArticle"
-soap_call "Eliminar articulo 88 vía SOAP" "" \
-    '<pla:DeleteArticleRequest>
-       <pla:id>88</pla:id>
-    </pla:DeleteArticleRequest>' \
-    'true'
-
-soap_call "Verificar eliminacion vía SOAP" "" \
-    '<pla:GetArticleByIdRequest>
-       <pla:id>88</pla:id>
-    </pla:GetArticleByIdRequest>' \
-    'GetArticleByIdResponse'
-
-# 6. Validaciones
-echo "▶ 6. Validaciones SOAP"
-soap_call "Buscar ID inexistente vía SOAP" "" \
-    '<pla:GetArticleByIdRequest>
-       <pla:id>99999</pla:id>
-    </pla:GetArticleByIdRequest>' \
-    'GetArticleByIdResponse'
-
-soap_call "Crear articulo sin datos vía SOAP" "" \
-    '<pla:CreateArticleRequest/>' \
-    'false'
-
-soap_call "Eliminar ID inexistente vía SOAP" "" \
-    '<pla:DeleteArticleRequest>
-       <pla:id>99999</pla:id>
-    </pla:DeleteArticleRequest>' \
-    'false'
-
-# 7. Calcular Margen SOAP
-echo "▶ 7. Calcular Margen SOAP"
 soap_call_margen() {
     local desc="$1" body="$2" expected="$3"
     local payload

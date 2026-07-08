@@ -33,6 +33,15 @@
         }, 1000);
 
         sendHeartbeat(el);
+
+        window.addEventListener("beforeunload", function () {
+            var operador = getOperator(el);
+            try {
+                navigator.sendBeacon("/api/actividad/heartbeat",
+                    new Blob([JSON.stringify({ operador: operador, estado: "ausente" })],
+                        { type: "application/json" }));
+            } catch (_) {}
+        });
     }
 
     function readOptions(el) {
